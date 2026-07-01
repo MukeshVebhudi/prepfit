@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PrepFit - Meal Prep Planner</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#meal-plan">Skip to meal plan</a>
+
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-mark" aria-hidden="true">PF</div>
+        <div>
+          <p class="eyebrow">Smart meal planning</p>
+          <h1>PrepFit</h1>
+          <p class="subtitle">High-protein prep plans, groceries, and prep flow in one dashboard.</p>
+        </div>
+      </div>
+
+      <div class="header-actions" aria-label="Quick actions">
+        <div id="account-chip" class="account-chip" hidden>
+          <span id="account-name">Guest</span>
+          <button id="logout-account" class="ghost-button compact" type="button">Log out</button>
+        </div>
+        <button id="theme-toggle" class="ghost-button" type="button" aria-pressed="false">Evening</button>
+        <button id="randomize" class="ghost-button" type="button">Shuffle</button>
+        <button id="print-plan" class="ghost-button" type="button">Print</button>
+        <button id="download-plan" class="primary-button" type="button">Download</button>
+      </div>
+    </header>
+
+    <section id="auth-view" class="auth-view" aria-labelledby="auth-title">
+      <div class="auth-card panel">
+        <div class="auth-copy">
+          <p class="eyebrow">Account</p>
+          <h2 id="auth-title">Sign in to PrepFit</h2>
+          <p>Keep meal settings, favorites, and saved preferences separate for each local profile on this device.</p>
+        </div>
+
+        <div class="auth-tabs" role="tablist" aria-label="Account mode">
+          <button id="auth-login-tab" class="ghost-button compact" type="button" aria-pressed="true">Log in</button>
+          <button id="auth-register-tab" class="ghost-button compact" type="button" aria-pressed="false">Create account</button>
+        </div>
+
+        <div id="saved-profiles" class="saved-profiles" aria-live="polite"></div>
+
+        <form id="gmail-form" class="gmail-form">
+          <label class="field">
+            <span>Use Gmail address locally</span>
+            <input id="gmail-address" name="gmail" type="email" inputmode="email" autocomplete="email" placeholder="you@gmail.com" />
+          </label>
+          <button id="gmail-submit" class="ghost-button" type="submit">Use Gmail as profile</button>
+          <p class="auth-hint">This does not contact Google. It creates a local PrepFit profile using that Gmail address.</p>
+        </form>
+
+        <div class="auth-divider" role="presentation"><span>or</span></div>
+
+        <form id="auth-form" class="auth-form">
+          <label class="field">
+            <span>Username</span>
+            <input id="auth-username" name="username" type="text" autocomplete="username" minlength="3" maxlength="24" required />
+          </label>
+          <label class="field">
+            <span>Passcode</span>
+            <input id="auth-passcode" name="passcode" type="password" autocomplete="current-password" minlength="4" required />
+          </label>
+          <button id="auth-submit" class="primary-button" type="submit">Log in</button>
+          <p id="auth-message" class="auth-message" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
+    <main class="dashboard-shell">
+      <aside class="planner-rail" aria-labelledby="planner-title">
+        <form id="planner-form" class="planner-card">
+          <div class="card-heading">
+            <p class="eyebrow">Planner</p>
+            <h2 id="planner-title">Build your week</h2>
+          </div>
+
+          <fieldset>
+            <legend>Protein target</legend>
+            <div class="segmented" role="radiogroup" aria-label="Protein goal type">
+              <label>
+                <input type="radio" name="goalMode" value="daily" checked />
+                <span>Daily</span>
+              </label>
+              <label>
+                <input type="radio" name="goalMode" value="weekly" />
+                <span>Weekly</span>
+              </label>
+            </div>
+            <label class="field">
+              <span id="goal-label">Protein per person per day</span>
+              <input id="protein-goal" name="proteinGoal" type="number" min="40" max="320" step="5" value="150" />
+            </label>
+            <label class="field">
+              <span>Powder protein grams/day</span>
+              <input id="powder-protein" name="powderProtein" type="number" min="0" max="140" step="5" value="0" />
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Plan settings</legend>
+            <div class="segmented" role="radiogroup" aria-label="Meal planning mode">
+              <label>
+                <input type="radio" name="mealMode" value="batch" checked />
+                <span>Batch</span>
+              </label>
+              <label>
+                <input type="radio" name="mealMode" value="variety" />
+                <span>Variety</span>
+              </label>
+            </div>
+            <div class="field-grid">
+              <label class="field">
+                <span>People</span>
+                <input id="people" name="people" type="number" min="1" max="8" value="1" />
+              </label>
+              <label class="field">
+                <span>Prep days</span>
+                <input id="days" name="days" type="number" min="1" max="7" value="5" />
+              </label>
+            </div>
+            <div class="field">
+              <span>Protein option</span>
+              <div class="chip-grid" role="radiogroup" aria-label="Choose one protein option">
+                <label><input type="radio" name="meat" value="chicken" checked /><span>Chicken</span></label>
+                <label><input type="radio" name="meat" value="beef" /><span>Beef</span></label>
+                <label><input type="radio" name="meat" value="turkey" /><span>Turkey</span></label>
+                <label><input type="radio" name="meat" value="fish" /><span>Fish</span></label>
+                <label><input type="radio" name="meat" value="vegetarian" /><span>Vegetarian</span></label>
+              </div>
+            </div>
+            <label class="field">
+              <span>Cuisine</span>
+              <select id="cuisine" name="cuisine">
+                <option value="random">Random</option>
+                <option value="american">American</option>
+                <option value="mexican">Mexican</option>
+                <option value="italian">Italian</option>
+                <option value="mediterranean">Mediterranean</option>
+                <option value="indian">Indian</option>
+                <option value="asian">Asian</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Budget mode</span>
+              <select id="budget" name="budget">
+                <option value="standard">Standard</option>
+                <option value="budget">Budget</option>
+                <option value="high-protein">High protein</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Avoid ingredients</span>
+              <input id="avoid-ingredients" name="avoidIngredients" type="text" placeholder="tofu, dairy, beans" autocomplete="off" />
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Nutrition targets</legend>
+            <div class="field-grid">
+              <label class="field">
+                <span>Calories/day</span>
+                <input id="calorie-goal" name="calorieGoal" type="number" min="0" max="4500" step="50" value="0" />
+              </label>
+              <label class="field">
+                <span>Carbs/day</span>
+                <input id="carb-goal" name="carbGoal" type="number" min="0" max="600" step="5" value="0" />
+              </label>
+              <label class="field">
+                <span>Fat/day</span>
+                <input id="fat-goal" name="fatGoal" type="number" min="0" max="250" step="5" value="0" />
+              </label>
+            </div>
+          </fieldset>
+
+          <div class="form-actions">
+            <button class="primary-button" type="submit">Generate Meals</button>
+            <button id="reset-plan" class="ghost-button" type="button">Reset</button>
+          </div>
+          <p id="planner-note" class="planner-note" aria-live="polite"></p>
+        </form>
+      </aside>
+
+      <section class="workspace" aria-label="Generated meal prep dashboard">
+        <section class="summary-card panel" aria-labelledby="summary-title" aria-live="polite">
+          <div>
+            <p class="eyebrow">Current plan</p>
+            <h2 id="summary-title">Ready to plan</h2>
+            <p id="summary-text">Choose your constraints and PrepFit will assemble a balanced prep plan.</p>
+          </div>
+          <div id="summary-stats" class="stat-grid"></div>
+        </section>
+
+        <section class="panel" aria-labelledby="plan-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Recipes</p>
+              <h2 id="plan-heading">Generated meal plan</h2>
+            </div>
+            <div id="plan-status" class="status-pill">Auto-generated</div>
+          </div>
+          <div id="meal-plan" class="meal-plan"></div>
+        </section>
+
+        <div class="side-grid">
+          <section class="panel" aria-labelledby="shopping-heading">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Groceries</p>
+                <h2 id="shopping-heading">Shopping list</h2>
+              </div>
+              <button id="copy-groceries" class="ghost-button compact" type="button">Copy</button>
+            </div>
+            <div id="grocery-list" class="grocery-list"></div>
+          </section>
+
+          <section class="panel" aria-labelledby="prep-heading">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Workflow</p>
+                <h2 id="prep-heading">Prep schedule</h2>
+              </div>
+            </div>
+            <div id="prep-schedule" class="prep-schedule"></div>
+          </section>
+
+          <section class="panel favorites-panel" aria-labelledby="favorites-heading">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Saved</p>
+                <h2 id="favorites-heading">Favorites</h2>
+              </div>
+              <button id="clear-favorites" class="ghost-button compact" type="button">Clear</button>
+            </div>
+            <div id="favorites-list" class="favorites-list"></div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
