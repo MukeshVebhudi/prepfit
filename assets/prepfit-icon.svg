@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">PrepFit app icon</title>
+  <desc id="desc">A green PrepFit mark with a plate and fork shape.</desc>
+  <rect width="512" height="512" rx="112" fill="#f5f8f4"/>
+  <circle cx="256" cy="256" r="168" fill="#1f8a5b"/>
+  <path fill="#ffffff" d="M159 177c0-16 13-29 29-29h136c16 0 29 13 29 29v158c0 16-13 29-29 29H188c-16 0-29-13-29-29V177Zm40 23v39h114v-39H199Zm0 84v38h114v-38H199Z"/>
+  <path fill="#ff9d2e" d="M344 149c13 0 24 11 24 24v188c0 9-7 16-16 16s-16-7-16-16v-84h-16c-9 0-16-7-16-16v-88c0-13 11-24 24-24h16Z"/>
+  <path fill="#dff3e7" d="M213 219h86v20h-86v-20Zm0 84h86v19h-86v-19Z"/>
+</svg>

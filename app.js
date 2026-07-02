@@ -256,6 +256,18 @@ function initialize() {
   applyTheme(loadTheme());
   bindEvents();
   restoreSession();
+  registerServiceWorker();
+}
+
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  if (!["http:", "https:"].includes(window.location.protocol)) return;
+
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("service-worker.js").catch(() => {
+      // The app still works normally if offline caching is unavailable.
+    });
+  });
 }
 
 function bindEvents() {

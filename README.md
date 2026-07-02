@@ -48,6 +48,34 @@ Then open:
 http://localhost:3000/
 ```
 
+## Android Web App
+
+PrepFit can run on an Android phone as an installable web app through GitHub Pages.
+
+To publish it from GitHub:
+
+1. Open the repository on GitHub.
+2. Go to `Settings -> Pages`.
+3. Set `Source` to `Deploy from a branch`.
+4. Select branch `main` and folder `/root`.
+5. Save.
+
+After GitHub Pages finishes deploying, open the Pages URL in Chrome on Android, then choose:
+
+```text
+Menu -> Add to Home screen
+```
+
+Chrome will install PrepFit like an app shortcut. Saved settings, local profiles, favorites, and generated plans are stored on that phone through browser storage.
+
+The APK-style Java server is not used on Android. Android uses the static files directly:
+
+- `index.html`
+- `styles.css`
+- `app.js`
+- `manifest.webmanifest`
+- `service-worker.js`
+
 ## Project Structure
 
 ```text
@@ -55,6 +83,10 @@ http://localhost:3000/
 ├── index.html
 ├── styles.css
 ├── app.js
+├── manifest.webmanifest
+├── service-worker.js
+├── assets
+│   └── prepfit-icon.svg
 └── src
     └── Main.java
 ```

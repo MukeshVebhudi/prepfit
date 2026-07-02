@@ -1,0 +1,28 @@
+{
+  "name": "PrepFit Meal Prep Planner",
+  "short_name": "PrepFit",
+  "description": "High-protein meal prep plans, grocery lists, prep schedules, and one-page batch cooking printouts.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f8f4",
+  "theme_color": "#1f8a5b",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/prepfit-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["food", "health", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Open Planner",
+      "short_name": "Planner",
+      "description": "Open the PrepFit meal planner dashboard.",
+      "url": "./"
+    }
+  ]
+}
