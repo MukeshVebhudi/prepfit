@@ -82,21 +82,44 @@ The APK-style Java server is not used on Android. Android uses the static files 
 .
 ├── index.html
 ├── styles.css
+├── recipe-data.js
 ├── app.js
 ├── manifest.webmanifest
 ├── service-worker.js
 ├── assets
 │   └── prepfit-icon.svg
+├── tests
+│   └── data-integrity.test.js
 └── src
     └── Main.java
 ```
 
 ## Notes
 
-- Accounts are local browser profiles stored in `localStorage`.
+- Accounts are local browser profiles stored in `localStorage`. A "Try it now as a guest" option on
+  the sign-in screen skips account creation entirely — guest data still persists on the device, and a
+  hint on the dashboard offers to convert it to a named profile later.
 - The Gmail profile option does not contact Google or use real OAuth.
-- Meal recipes and macro estimates are stored directly in `app.js`.
+- Meal recipes and macro estimates live in `recipe-data.js`, kept separate from `app.js` so the data
+  can be validated by a plain Node script (see Testing) without a bundler or npm dependency. It's
+  loaded as a second classic `<script>` tag before `app.js` and shares the same global scope, so
+  nothing in `app.js` had to change to use it.
 - The Java server only serves static files from the project root and optional `assets` folder.
+
+## Testing
+
+`recipe-data.js` exports its data via `module.exports` when run under Node (guarded by
+`typeof module !== "undefined"`, so it's a no-op in the browser), which lets a dependency-free Node
+script check that every ingredient referenced by a recipe has both a macro entry and a grocery
+category — the exact class of bug that under-reports a recipe's protein/calories without any visible
+error.
+
+```bash
+node tests/data-integrity.test.js
+```
+
+No test framework or `package.json` required. Exits non-zero on failure, so it can be wired into a
+pre-commit hook or CI step later if desired.
 
 ## Tech Stack
 
@@ -104,3 +127,37 @@ The APK-style Java server is not used on Android. Android uses the static files 
 - CSS
 - Vanilla JavaScript
 - Java `com.sun.net.httpserver.HttpServer`
+
+## Publish to Google Play
+
+PrepFit can be wrapped as an Android app with a [Trusted Web Activity](https://developer.chrome.com/docs/android/trusted-web-activity/)
+(TWA) using [Bubblewrap](https://github.com/GoogleChromeLabs/bubblewrap) — a thin native shell around
+the deployed PWA, not a rebuild. This needs the app to already be live over HTTPS (GitHub Pages works)
+and a Google Play Console developer account (one-time $25 fee, created by you — not something that
+can be automated here).
+
+1. **Deploy first.** Follow the "Android Web App" steps above so `manifest.webmanifest` is reachable
+   at a public HTTPS URL, e.g. `https://mukeshvebhudi.github.io/prepfit/manifest.webmanifest`.
+2. **Generate the Android project** (via `npx`, so Bubblewrap never becomes a project dependency —
+   the app itself still has no npm/build-tool requirement):
+   ```bash
+   npx @bubblewrap/cli init --manifest=https://mukeshvebhudi.github.io/prepfit/manifest.webmanifest
+   ```
+   Bubblewrap will ask a few confirmation questions (package name, colors, icon) pre-filled from the
+   manifest, and generates all required Android icon sizes automatically from `assets/prepfit-icon.svg`.
+3. **Build the signed app bundle:**
+   ```bash
+   npx @bubblewrap/cli build
+   ```
+   This creates a release keystore (back it up — losing it means you can't update the app later) and
+   produces an `app-release-bundle.aab`.
+4. **Verify domain ownership.** Get the release key's SHA-256 fingerprint:
+   ```bash
+   keytool -list -v -keystore android.keystore -alias android
+   ```
+   Put it into `.well-known/assetlinks.json` in this repo (a placeholder is already checked in),
+   replacing `PLACEHOLDER_SHA256_FINGERPRINT`, then redeploy so it's live at
+   `https://mukeshvebhudi.github.io/prepfit/.well-known/assetlinks.json`. Without this file matching,
+   the installed app shows browser UI instead of a full-screen native experience.
+5. **Upload to Play Console.** Create an app listing at [play.google.com/console](https://play.google.com/console)
+   and upload the `.aab` from step 3. This step requires your own developer account.

@@ -95,7 +95,8 @@ public class Main {
             return CONTENT_TYPES.containsKey(extension(relativeFile));
         }
 
-        return "assets".equals(relativeFile.getName(0).toString())
+        String topLevelDir = relativeFile.getName(0).toString();
+        return ("assets".equals(topLevelDir) || ".well-known".equals(topLevelDir))
                 && CONTENT_TYPES.containsKey(extension(relativeFile));
     }
 

@@ -44,6 +44,9 @@
           <p>Keep meal settings, favorites, and saved preferences separate for each local profile on this device.</p>
         </div>
 
+        <button id="guest-start" class="primary-button" type="button">Try it now as a guest</button>
+        <p class="auth-hint">No account needed. Your plan stays on this device — create a free profile any time to keep it long-term.</p>
+
         <div class="auth-tabs" role="tablist" aria-label="Account mode">
           <button id="auth-login-tab" class="ghost-button compact" type="button" aria-pressed="true">Log in</button>
           <button id="auth-register-tab" class="ghost-button compact" type="button" aria-pressed="false">Create account</button>
@@ -84,6 +87,7 @@
             <p class="eyebrow">Planner</p>
             <h2 id="planner-title">Build your week</h2>
           </div>
+          <a id="jump-to-plan" class="jump-link" href="#meal-plan" hidden>Jump to today's plan ↓</a>
 
           <fieldset>
             <legend>Protein target</legend>
@@ -197,6 +201,7 @@
             <p class="eyebrow">Current plan</p>
             <h2 id="summary-title">Ready to plan</h2>
             <p id="summary-text">Choose your constraints and PrepFit will assemble a balanced prep plan.</p>
+            <p id="guest-hint" class="auth-hint" hidden>Using PrepFit as a guest on this device — <button id="guest-upgrade" class="link-button" type="button">create a free profile</button> to keep this plan on other devices too.</p>
           </div>
           <div id="summary-stats" class="stat-grid"></div>
         </section>
@@ -248,6 +253,7 @@
       </section>
     </main>
 
+    <script src="recipe-data.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
