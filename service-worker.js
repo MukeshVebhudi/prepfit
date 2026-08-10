@@ -1,9 +1,10 @@
-const CACHE_NAME = "prepfit-static-v2";
+const CACHE_NAME = "prepfit-static-v3";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./recipe-data.js",
+  "./plan-math.js",
   "./app.js",
   "./manifest.webmanifest",
   "./assets/prepfit-icon.svg"

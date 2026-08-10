@@ -83,13 +83,15 @@ The APK-style Java server is not used on Android. Android uses the static files 
 ├── index.html
 ├── styles.css
 ├── recipe-data.js
+├── plan-math.js
 ├── app.js
 ├── manifest.webmanifest
 ├── service-worker.js
 ├── assets
 │   └── prepfit-icon.svg
 ├── tests
-│   └── data-integrity.test.js
+│   ├── data-integrity.test.js
+│   └── plan-math.test.js
 └── src
     └── Main.java
 ```
@@ -100,26 +102,31 @@ The APK-style Java server is not used on Android. Android uses the static files 
   the sign-in screen skips account creation entirely — guest data still persists on the device, and a
   hint on the dashboard offers to convert it to a named profile later.
 - The Gmail profile option does not contact Google or use real OAuth.
-- Meal recipes and macro estimates live in `recipe-data.js`, kept separate from `app.js` so the data
-  can be validated by a plain Node script (see Testing) without a bundler or npm dependency. It's
-  loaded as a second classic `<script>` tag before `app.js` and shares the same global scope, so
-  nothing in `app.js` had to change to use it.
+- Meal recipes and macro estimates live in `recipe-data.js`; the protein-scaling and calorie-capping
+  math lives in `plan-math.js`. Both are kept separate from `app.js` so they can be checked by plain
+  Node scripts (see Testing) without a bundler or npm dependency. They load as classic `<script>` tags
+  before `app.js` (`recipe-data.js` → `plan-math.js` → `app.js`) and share the same global scope, so
+  nothing in `app.js` itself had to change to use them.
 - The Java server only serves static files from the project root and optional `assets` folder.
 
 ## Testing
 
-`recipe-data.js` exports its data via `module.exports` when run under Node (guarded by
-`typeof module !== "undefined"`, so it's a no-op in the browser), which lets a dependency-free Node
-script check that every ingredient referenced by a recipe has both a macro entry and a grocery
-category — the exact class of bug that under-reports a recipe's protein/calories without any visible
-error.
+`recipe-data.js` and `plan-math.js` both export via `module.exports` when run under Node (guarded by
+`typeof module !== "undefined"`, so it's a no-op in the browser) — the same pattern used to load them
+as plain `<script>` tags in `index.html`, just consumed by `require()` instead. That's what lets these
+two dependency-free Node scripts run without a test framework or `package.json`:
 
 ```bash
-node tests/data-integrity.test.js
+node tests/data-integrity.test.js   # every recipe ingredient has a macro entry and a grocery category
+node tests/plan-math.test.js        # protein scaling, calorie capping, and macro aggregation
 ```
 
-No test framework or `package.json` required. Exits non-zero on failure, so it can be wired into a
-pre-commit hook or CI step later if desired.
+`data-integrity` catches the class of bug that silently under-reports a recipe's protein/calories.
+`plan-math` covers the part of the app that actually decides what the numbers on screen are: that
+scaling meals toward a protein target lands in range (and clamps instead of overshooting when the
+target is unreachable), that the calorie cap never *raises* a meal's calories, and that its 0.72x
+floor is respected even when a meal is too dense to fully cap. Both exit non-zero on failure, so
+either can be wired into a pre-commit hook or CI step later if desired.
 
 ## Tech Stack
 

@@ -33,7 +33,6 @@ const CUISINES = {
 
 const CATEGORIES = ["Protein", "Produce", "Grains", "Dairy", "Pantry", "Spices", "Frozen", "Other"];
 const MEAL_TYPES = ["Breakfast", "Lunch", "Dinner"];
-const MAX_MEAL_CALORIES = 620;
 
 const dom = {
   form: document.querySelector("#planner-form"),
@@ -552,20 +551,6 @@ function recipeScore(recipe, type, settings, usedNames, seed, index) {
   return score;
 }
 
-function scaleMealsToProtein(meals, foodTarget, settings) {
-  const current = meals.reduce((sum, meal) => sum + meal.macros.protein, 0);
-  if (!Number.isFinite(current) || current <= 0) return meals;
-
-  const ratio = clamp(foodTarget / current, 0.72, settings.budget === "high-protein" ? 1.32 : 1.2);
-  return meals.map((meal) => capMeal(scaleMeal(meal, ratio)));
-}
-
-function capMeal(meal) {
-  if (meal.macros.calories <= MAX_MEAL_CALORIES) return meal;
-  const ratio = clamp((MAX_MEAL_CALORIES - 8) / meal.macros.calories, 0.72, 1);
-  return scaleMeal(meal, ratio);
-}
-
 function makeDay(day, selected, settings) {
   const meals = selected.meals.map((meal, index) => ({ ...meal, label: MEAL_TYPES[index] }));
   const macros = meals.reduce(sumMacros, emptyMacros());
@@ -996,50 +981,6 @@ function targetStatus(delta, target) {
   return { kind: "over", label: "Over target", short: `${Math.round(delta)}g over` };
 }
 
-function cloneRecipe(recipe) {
-  return {
-    ...recipe,
-    ingredients: recipe.ingredients.map((ingredient) => ({ ...ingredient })),
-    steps: [...recipe.steps],
-    macros: { ...recipe.macros },
-  };
-}
-
-function scaleMeal(meal, ratio) {
-  const scaled = cloneRecipe(meal);
-  scaled.ingredients = scaled.ingredients.map((ingredient) => ({
-    ...ingredient,
-    amount: Math.max(0.05, roundAmount(ingredient.amount * ratio)),
-  }));
-  scaled.macros = macrosForMeal(scaled.ingredients);
-  return scaled;
-}
-
-function macrosForDay(meals, powderProtein) {
-  const macros = meals.reduce(sumMacros, emptyMacros());
-  return addMacros(macros, {
-    protein: powderProtein,
-    calories: powderProtein ? Math.round(powderProtein * 4.8) : 0,
-    carbs: powderProtein ? 3 : 0,
-    fat: powderProtein ? 1 : 0,
-  });
-}
-
-function averageMacros(days) {
-  if (!days.length) return emptyMacros();
-  const total = days.reduce((sum, day) => addMacros(sum, day.macros), emptyMacros());
-  return {
-    protein: total.protein / days.length,
-    calories: total.calories / days.length,
-    carbs: total.carbs / days.length,
-    fat: total.fat / days.length,
-  };
-}
-
-function sumMacros(sum, meal) {
-  return addMacros(sum, meal.macros);
-}
-
 function formatIngredient(ingredient, multiplier) {
   const amount = roundAmount(ingredient.amount * multiplier);
   const unit = displayUnit(normalizeUnit(ingredient.unit), amount);
@@ -1193,10 +1134,6 @@ function formatAmount(value) {
   return value.toFixed(1).replace(/\.0$/, "");
 }
 
-function roundAmount(value) {
-  return Math.round(value * 20) / 20;
-}
-
 function normalizeUnit(unit) {
   const normalized = String(unit || "").toLowerCase();
   return {
@@ -1258,10 +1195,6 @@ function oneOf(value, options, fallback) {
 function numberFrom(value, fallback) {
   const number = Number(value);
   return Number.isFinite(number) ? number : fallback;
-}
-
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
 }
 
 function seededNoise(text, seed) {
