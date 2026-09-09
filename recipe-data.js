@@ -177,15 +177,35 @@ function expandIngredient(ingredient) {
 function validateRecipeIngredients(recipes) {
   const missingMacros = new Set();
   const missingCategory = new Set();
+  const duplicateIds = new Set();
+  const invalidFields = new Set();
+  const invalidUnits = new Set();
+  const invalidNutrition = new Set();
+  const seenIds = new Set();
 
   Object.values(recipes).flat().forEach((recipe) => {
+    if (!recipe.id || seenIds.has(recipe.id)) duplicateIds.add(recipe.id || "(missing)");
+    seenIds.add(recipe.id);
+    if (!recipe.name || !recipe.label || !recipe.cuisine || !recipe.proteinType
+      || !Array.isArray(recipe.steps) || recipe.steps.length < 3
+      || recipe.steps.some((step) => typeof step !== "string" || !step.trim())
+      || !Array.isArray(recipe.ingredients) || !recipe.ingredients.length
+      || !Array.isArray(recipe.allergens)) invalidFields.add(recipe.name || recipe.id || "(unnamed)");
+    if (!recipe.macros || Object.values(recipe.macros).some((value) => !Number.isFinite(value) || value < 0)
+      || recipe.macros.protein > 200 || recipe.macros.calories > 2500
+      || recipe.macros.carbs > 400 || recipe.macros.fat > 200) invalidNutrition.add(recipe.name || recipe.id);
     recipe.ingredients.forEach((ingredient) => {
       if (!NUTRITION[ingredient.name]) missingMacros.add(ingredient.name);
       if (!CATEGORY_BY_INGREDIENT[ingredient.name]) missingCategory.add(ingredient.name);
+      try { ingredientGrams(ingredient); } catch (error) { invalidUnits.add(`${recipe.name}: ${ingredient.name}/${ingredient.unit}`); }
     });
   });
 
-  return { missingMacros: [...missingMacros], missingCategory: [...missingCategory] };
+  return {
+    missingMacros: [...missingMacros], missingCategory: [...missingCategory],
+    duplicateIds: [...duplicateIds], invalidFields: [...invalidFields],
+    invalidUnits: [...invalidUnits], invalidNutrition: [...invalidNutrition],
+  };
 }
 
 function buildRecipeLibrary() {
@@ -217,6 +237,46 @@ function buildRecipeLibrary() {
       item("baby potatoes", 4, "oz"),
       item("masala spices", 1, "tsp"),
     ], ["Weigh potatoes raw, combine the listed masala spice components, and roast on parchment at 425 F until tender.", "Sear paneer in a nonstick skillet and wilt spinach with a splash of water; no unlisted oil is included.", "Top with a cooked egg before portioning."], 3),
+    recipe("Breakfast", "american", "vegetarian", "Blueberry Cottage Cheese Toast", [
+      item("cottage cheese", 1, "cup"), item("whole grain bread", 2, "slices"),
+      item("blueberries", 0.75, "cup"), item("peanut butter", 1, "tbsp"),
+    ], ["Toast the bread until crisp.", "Spread cottage cheese and the measured peanut butter across the toast.", "Pack blueberries separately and add immediately before serving."], 2),
+    recipe("Breakfast", "american", "chicken", "Chicken Sweet Potato Breakfast Hash", [
+      item("chicken breast", 4.5, "oz"), item("sweet potato", 1, "count"),
+      item("bell peppers", 1, "cup"), item("spinach", 1, "cup"), item("paprika", 1, "tsp"),
+    ], ["Cook chicken without extra oil to 165 F, rest it, and weigh the cooked portion.", "Dice the raw sweet potato and pepper; roast on parchment at 425 F until tender.", "Wilt spinach with water, season with paprika, combine, and cool in shallow containers within 2 hours."], 2),
+    recipe("Breakfast", "mexican", "beef", "Beef Black Bean Breakfast Bowl", [
+      item("lean ground beef", 4, "oz"), item("black beans", 0.65, "cup"),
+      item("whole eggs", 1, "count"), item("salsa", 0.25, "cup"), item("spinach", 1, "cup"),
+    ], ["Cook ground beef to 160 F and the egg until set, using a food thermometer for the beef.", "Warm cooked drained beans and wilt spinach with a splash of water.", "Portion with salsa on the side and refrigerate or freeze within 2 hours."], 3),
+    recipe("Breakfast", "mediterranean", "turkey", "Turkey Hummus Breakfast Pita", [
+      item("turkey slices", 4, "oz"), item("pita", 1, "count"), item("hummus", 3, "tbsp"),
+      item("cucumber", 1, "cup"), item("spinach", 1, "cup"),
+    ], ["Warm the ready-to-eat turkey and pita separately.", "Wash and dry cucumber and spinach, then keep them cold.", "Pack hummus and vegetables separately; assemble after reheating the turkey and pita."], 2),
+    recipe("Breakfast", "asian", "fish", "Salmon Edamame Breakfast Rice", [
+      item("salmon fillet", 4.5, "oz"), item("brown rice", 0.75, "cup"),
+      item("edamame", 0.5, "cup"), item("spinach", 1.5, "cups"), item("soy sauce", 1, "tbsp"),
+    ], ["Cook salmon to 145 F and weigh the cooked edible portion.", "Cook brown rice in water and measure it cooked; warm edamame and wilt spinach.", "Add measured soy sauce, portion into shallow containers, and refrigerate or freeze within 2 hours."], 4),
+    recipe("Breakfast", "asian", "vegetarian", "Savory Tofu Quinoa Breakfast Bowl", [
+      item("extra firm tofu", 7, "oz"), item("quinoa", 0.7, "cup"),
+      item("spinach", 1.5, "cups"), item("snap peas", 1, "cup"), item("ginger", 1, "tbsp"),
+    ], ["Drain and weigh tofu, then brown it in a nonstick pan with a splash of water.", "Cook quinoa in water and measure it cooked; steam snap peas and wilt spinach.", "Stir in measured ginger, portion into shallow containers, and chill within 2 hours."], 2),
+    recipe("Breakfast", "mediterranean", "vegetarian", "Chickpea Avocado Breakfast Pita", [
+      item("chickpeas", 0.85, "cup"), item("pita", 1, "count"), item("avocado", 0.5, "count"),
+      item("cucumber", 1, "cup"), item("lemon", 0.5, "count"),
+    ], ["Warm cooked drained chickpeas and the pita separately.", "Dice cucumber and combine it with the measured fresh lemon juice.", "Keep avocado and cucumber cold and assemble the pita immediately before eating."], 1),
+    recipe("Breakfast", "italian", "vegetarian", "Egg White Marinara Breakfast Toast", [
+      item("egg whites", 1, "cup"), item("whole grain bread", 2, "slices"),
+      item("marinara sauce", 0.35, "cup"), item("spinach", 1.5, "cups"), item("mozzarella cheese", 0.2, "cup"),
+    ], ["Cook egg whites until fully set and wilt spinach with a splash of water.", "Toast bread and warm the measured marinara.", "Top with egg whites, spinach, and mozzarella; cool leftovers in shallow containers within 2 hours."], 2),
+    recipe("Breakfast", "indian", "vegetarian", "Masala Lentil Potato Breakfast Bowl", [
+      item("lentils", 0.85, "cup"), item("baby potatoes", 5, "oz"),
+      item("spinach", 2, "cups"), item("plain Greek yogurt", 120, "g"), item("masala spices", 1, "tsp"),
+    ], ["Cook lentils in water, drain, and measure them cooked.", "Weigh potatoes raw and roast on parchment at 425 F; wilt spinach with water and the measured spice blend.", "Combine the hot ingredients and pack yogurt separately to add after reheating."], 1),
+    recipe("Breakfast", "mexican", "turkey", "Turkey Salsa Quinoa Breakfast Bowl", [
+      item("lean ground turkey", 4.5, "oz"), item("quinoa", 0.7, "cup"),
+      item("corn", 0.6, "cup"), item("salsa", 0.3, "cup"), item("avocado", 0.25, "count"),
+    ], ["Cook ground turkey to 165 F, measured with a food thermometer, then weigh the cooked portion.", "Cook quinoa in water and measure it cooked; warm and drain the corn.", "Portion with salsa, keep avocado separate, and chill in shallow containers within 2 hours."], 2),
   ];
 
   return {
@@ -385,6 +445,7 @@ function proteinItem(type, label, ounces) {
 
 function recipe(label, cuisine, proteinType, name, ingredients, steps, cost = 2) {
   const normalized = {
+    id: `${label}-${cuisine}-${proteinType}-${name}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
     label,
     cuisine,
     proteinType,
@@ -393,6 +454,8 @@ function recipe(label, cuisine, proteinType, name, ingredients, steps, cost = 2)
     steps,
     cost,
   };
+  normalized.allergens = [...new Set(normalized.ingredients.flatMap((ingredient) =>
+    (INGREDIENT_TAGS[ingredient.name] || []).filter((tag) => ["dairy", "eggs", "fish", "legumes"].includes(tag))))].sort();
   normalized.macros = macrosForMeal(normalized.ingredients);
   normalized.searchText = `${name} ${ingredients.map((ingredient) => ingredient.name).join(" ")}`.toLowerCase();
   return normalized;

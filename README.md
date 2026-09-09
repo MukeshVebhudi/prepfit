@@ -218,7 +218,7 @@ a static site and avoid adding a framework unless a later measured need justifie
 
 - [x] 1. Split the application into focused JavaScript modules
 - [x] 2. Run real-browser journeys in GitHub Actions
-- [ ] 3. Expand and validate the recipe catalog
+- [x] 3. Expand and validate the recipe catalog
 - [ ] 4. Improve nutrition feedback and customization
 - [ ] 5. Make groceries more practical
 - [ ] 6. Add direct plan editing and better recovery controls
@@ -299,6 +299,19 @@ only after the full release command and browser suite pass.
 ```
 
 ### 3. Expand and validate the recipe catalog
+
+Completed September 9, 2026. The catalog now contains 434 recipes. Breakfast coverage increased
+from four recipes to fourteen, spans all six supported cuisines, and includes every protein option
+along with dairy-free, egg-free, and vegetarian choices. The added recipes use distinct ingredient
+sets and cooking methods such as hashes, toast, pita, rice, quinoa, lentil, and tofu bowls. Meat and
+fish instructions retain thermometer temperatures and prepared meals include safe cooling guidance.
+
+Every recipe now has a stable generated ID and derived allergen tags for dairy, eggs, fish, and
+legumes. Catalog checks reject duplicate or missing IDs, missing required fields, unsupported units,
+invalid nutrition ranges, missing nutrition/category references, and incorrect allergen derivation.
+Coverage assertions protect cuisine, meal-type, and protein availability. A seven-day variety test
+for every protein option verifies that breakfast, lunch, and dinner names do not repeat when the
+catalog has alternatives. The offline cache was advanced to `v10` for the catalog release.
 
 Reduce repeated template meals by adding meaningfully different recipes across cuisines, dietary
 patterns, meal types, and cooking methods. Keep ingredient units and nutrition estimates tied to the

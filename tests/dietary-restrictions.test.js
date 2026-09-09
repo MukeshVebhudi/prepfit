@@ -55,17 +55,17 @@ for (const type of MEAL_TYPES) {
     assert.ok(!recipe.ingredients.some(i => /yogurt|cheese|whey|Alfredo|tzatziki|tikka masala/.test(i.name)));
   }
 }
-assert.equal(recipeCandidates('Breakfast', { ...base, meat: 'vegetarian', excluded: ['dairy'] }).length, 0);
+assert.ok(recipeCandidates('Breakfast', { ...base, meat: 'vegetarian', excluded: ['dairy'] }).length > 0);
 assert.equal(recipeCandidates('Lunch', { ...base, meat: 'vegetarian', excluded: ['legumes'] }).length, 0);
-assert.equal(recipeCandidates('Breakfast', { ...base, excluded: ['eggs'] }).length, 1);
+assert.ok(recipeCandidates('Breakfast', { ...base, excluded: ['eggs'] }).length > 1);
 assert.equal(recipeCandidates('Dinner', { ...base, meat: 'fish', excluded: ['fish'] }).length, 0);
-// Only one breakfast remains; swapping must retain it rather than bypass exclusions.
-const singleSettings = { ...base, meat: 'vegetarian', excluded: ['eggs'] };
-const singlePlan = buildPlan(singleSettings);
-state = { settings: singleSettings, plan: singlePlan, warning: '' };
-const before = JSON.stringify(state.plan);
-swapMeal(0, 0);
-assert.equal(JSON.stringify(state.plan), before);
-assert.match(dom.plannerNote.textContent, /No alternative breakfast/);
-console.log('PASS: dietary generation, shuffle, swaps, category exclusions, and no-match rendering');
+for (const meat of Object.keys(PROTEINS)) {
+  const settings = { ...base, days: 7, mealMode: 'variety', meat };
+  const plan = buildPlan(settings, { shuffle: true });
+  for (let mealIndex = 0; mealIndex < MEAL_TYPES.length; mealIndex += 1) {
+    const names = plan.days.map(day => day.meals[mealIndex].name);
+    assert.equal(new Set(names).size, 7, meat + '/' + MEAL_TYPES[mealIndex] + ' repeats within one week');
+  }
+}
+console.log('PASS: dietary generation, shuffle, swaps, exclusions, no-match rendering, and weekly variety');
 `, context);
