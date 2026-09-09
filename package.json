@@ -1,0 +1,12 @@
+{
+  "name": "prepfit-browser-tests",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "bash scripts/check.sh",
+    "test:browser": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

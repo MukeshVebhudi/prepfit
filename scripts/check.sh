@@ -8,6 +8,7 @@ node --check recipe-data.js
 node --check plan-math.js
 node --check app.js
 node --check service-worker.js
+for module in modules/*.js; do node --check "$module"; done
 
 node tests/data-integrity.test.js
 node tests/nutrition.test.js

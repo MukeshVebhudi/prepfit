@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Set;
 
 public class Main {
     private static final int PORT = 8080;
@@ -26,6 +27,11 @@ public class Main {
             "png", "image/png",
             "jpg", "image/jpeg",
             "jpeg", "image/jpeg"
+    );
+    private static final Set<String> PUBLIC_ROOT_FILES = Set.of(
+            "index.html", "styles.css", "nutrition-data.js", "nutrition.html",
+            "recipe-data.js", "plan-math.js", "app.js", "manifest.webmanifest",
+            "service-worker.js"
     );
 
     public static void main(String[] args) throws IOException {
@@ -93,7 +99,7 @@ public class Main {
 
         Path relativeFile = PROJECT_ROOT.relativize(file);
         if (relativeFile.getNameCount() == 1) {
-            return CONTENT_TYPES.containsKey(extension(relativeFile));
+            return PUBLIC_ROOT_FILES.contains(relativeFile.toString());
         }
 
         String topLevelDir = relativeFile.getName(0).toString();

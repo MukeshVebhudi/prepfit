@@ -5,7 +5,9 @@
 
 PrepFit is a lightweight meal prep planner that generates high-protein batch cooking plans, macros, grocery lists, prep schedules, favorites, and legible multi-page printouts.
 
-The app is built with plain HTML, CSS, vanilla JavaScript, and a small Java static file server. It does not use React, npm, Maven, Gradle, external APIs, or a database.
+The app is built with plain HTML, CSS, vanilla JavaScript, and a small Java static file server. It
+does not use React, Maven, Gradle, external APIs, or a database. npm is used only for Playwright
+browser tests and is not required to run the app.
 
 ## Features
 
@@ -88,6 +90,9 @@ The APK-style Java server is not used on Android. Android uses the static files 
 ├── recipe-data.js
 ├── plan-math.js
 ├── app.js
+├── package.json
+├── package-lock.json
+├── playwright.config.js
 ├── modules
 │   ├── export.js
 │   ├── groceries.js
@@ -106,6 +111,8 @@ The APK-style Java server is not used on Android. Android uses the static files 
 │   └── prepfit-icon.svg
 ├── tests
 │   ├── data-integrity.test.js
+│   ├── browser
+│   │   └── app.spec.js
 │   ├── offline.test.js
 │   ├── plan-math.test.js
 │   ├── persistence.test.js
@@ -114,6 +121,7 @@ The APK-style Java server is not used on Android. Android uses the static files 
 │   └── usability.test.js
 ├── scripts
 │   ├── check.sh
+│   ├── start-browser-server.sh
 │   └── render-nutrition-reference.js
 └── src
     └── Main.java
@@ -123,12 +131,11 @@ The APK-style Java server is not used on Android. Android uses the static files 
 
 - Profiles are local labels stored in `localStorage`; they are not secure accounts and do not sync.
   Guest data persists in the same browser and can be moved intact to a named profile.
-- Meal recipes and macro estimates live in `recipe-data.js`; target fitting, portion bounds, and
-  nutrition tolerances live in `plan-math.js`. Both are kept separate from `app.js` so they can be checked by plain
-  Node scripts (see Testing) without a bundler or npm dependency. They load as classic `<script>` tags
-  before `app.js` (`recipe-data.js` → `plan-math.js` → `app.js`) and share the same global scope, so
-  nothing in `app.js` itself had to change to use them.
-- The Java server only serves static files from the project root and optional `assets` folder.
+- Meal recipes and macro estimates live in `recipe-data.js`; target fitting and portion bounds live
+  in `plan-math.js`. Focused ES modules under `modules/` handle planning, profiles, persistence,
+  groceries, rendering, export, storage, and utilities. No bundler or application build is required.
+- The Java server serves approved static files from the project root plus `assets`, `modules`, and
+  `.well-known`; tests and other project files remain private.
 
 ## Testing
 
@@ -142,6 +149,18 @@ The command checks JavaScript syntax and runs the dietary, nutrition, target-mat
 profile-migration, offline-cache, accessibility/usability, and Java HTTP-server tests. It compiles
 Java into a temporary directory and exits non-zero on any failure. The Java server test binds a
 temporary loopback port, so restricted shells may need permission for local networking.
+
+Install and run the pinned Chromium journey suite:
+
+```bash
+npm ci
+npx playwright install chromium
+npm run test:browser
+```
+
+Playwright starts the Java server automatically on an isolated port. Failure output is written to
+`test-results/`, including screenshots, videos, and traces. CI uploads those files as a seven-day
+artifact when the browser job fails.
 
 [GitHub Actions](.github/workflows/verify.yml) runs this same command with Node 22 and Java 21 on
 every push and pull request. The production app still has no npm package or build dependency.
@@ -198,7 +217,7 @@ a static site and avoid adding a framework unless a later measured need justifie
 ### Phase 2 progress checklist
 
 - [x] 1. Split the application into focused JavaScript modules
-- [ ] 2. Run real-browser journeys in GitHub Actions
+- [x] 2. Run real-browser journeys in GitHub Actions
 - [ ] 3. Expand and validate the recipe catalog
 - [ ] 4. Improve nutrition feedback and customization
 - [ ] 5. Make groceries more practical
@@ -244,6 +263,17 @@ the core browser journey before marking the checklist complete.
 ```
 
 ### 2. Run real-browser journeys in GitHub Actions
+
+Completed September 9, 2026. Playwright `1.63.0` is pinned through `package-lock.json` and has no
+reported npm audit vulnerabilities. The suite starts the real Java server on port 4173 and runs in
+Chromium after the fast release-check job succeeds. The main journey covers guest entry, vegetarian
+and ingredient restrictions, generation, swap, favorite, grocery checkoff, reload, profile
+conversion, download, print media, and a service-worker-backed offline revisit. A separate 390×844
+test verifies the mobile plan shortcut and absence of horizontal overflow.
+
+The Playwright configuration retains screenshots, videos, and traces on failure. GitHub Actions
+uploads `test-results/` and the HTML report as a seven-day failure artifact. Local verification
+passed both browser tests in Chromium 153, and `bash scripts/check.sh` continues to pass independently.
 
 Add Playwright as development tooling and run a compact Chromium suite against the real Java server.
 Cover the user paths that DOM-mocked tests cannot prove, while keeping the faster unit and server

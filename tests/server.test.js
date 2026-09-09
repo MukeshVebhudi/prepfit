@@ -61,6 +61,7 @@ function waitForReady(process) {
 
     assert.equal((await fetch(`${base}/src/Main.java`)).status, 404);
     assert.equal((await fetch(`${base}/package.json`)).status, 404);
+    assert.equal((await fetch(`${base}/playwright.config.js`)).status, 404);
     assert.equal((await fetch(`${base}/`, { method: "POST" })).status, 405);
     console.log("PASS: Java server MIME types, HEAD, methods, and public-file boundary");
   } finally {
