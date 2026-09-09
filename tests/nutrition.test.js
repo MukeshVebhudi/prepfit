@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const { loadAppSources } = require('./load-app');
 const {
   NUTRITION, RECIPES, ingredientGrams, macrosForIngredient, macrosForMeal,
   supplementalPowderIngredient, addMacros, emptyMacros,
@@ -104,8 +105,8 @@ for (const invalid of [
 
 // Exercise the shipped integration code without browser dependencies.
 const ctx = vm.createContext({ console, assert, near, document: { querySelector: () => ({ dataset: {} }) } });
-for (const file of ['nutrition-data.js', 'recipe-data.js', 'plan-math.js', 'app.js']) {
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '..', file), 'utf8').replace(/^initialize\(\);$/m, ''), ctx);
+for (const appSource of loadAppSources(path.join(__dirname, '..'))) {
+  vm.runInContext(appSource, ctx);
 }
 vm.runInContext(`
 const groceryDays = [{ meals: [{ ingredients: [

@@ -51,6 +51,10 @@ function waitForReady(process) {
     assert.equal(serviceWorker.status, 200);
     assert.match(serviceWorker.headers.get("content-type"), /^application\/javascript/);
 
+    const appModule = await fetch(`${base}/modules/groceries.js`);
+    assert.equal(appModule.status, 200);
+    assert.match(appModule.headers.get("content-type"), /^application\/javascript/);
+
     const head = await fetch(`${base}/index.html`, { method: "HEAD" });
     assert.equal(head.status, 200);
     assert.equal(await head.text(), "");

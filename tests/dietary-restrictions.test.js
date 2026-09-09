@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const { loadAppSources } = require('./load-app');
 
 // Run the shipped classic scripts with inert DOM elements; skip startup only.
 const elements = new Map();
@@ -9,9 +10,8 @@ const context = vm.createContext({ console, document: { querySelector(selector) 
   if (!elements.has(selector)) elements.set(selector, { textContent: '', innerHTML: '', dataset: {} });
   return elements.get(selector);
 } }, assert });
-for (const file of ['nutrition-data.js', 'recipe-data.js', 'plan-math.js', 'app.js']) {
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '..', file), 'utf8')
-    .replace(/^initialize\(\);$/m, ''), context);
+for (const source of loadAppSources(path.join(__dirname, '..'))) {
+  vm.runInContext(source, context);
 }
 vm.runInContext(`
 const base = { ...DEFAULTS, dailyTarget: 150, excluded: [], days: 3 };

@@ -88,6 +88,15 @@ The APK-style Java server is not used on Android. Android uses the static files 
 ├── recipe-data.js
 ├── plan-math.js
 ├── app.js
+├── modules
+│   ├── export.js
+│   ├── groceries.js
+│   ├── persistence.js
+│   ├── planner.js
+│   ├── profiles.js
+│   ├── render.js
+│   ├── storage.js
+│   └── utils.js
 ├── manifest.webmanifest
 ├── service-worker.js
 ├── .github
@@ -188,7 +197,7 @@ a static site and avoid adding a framework unless a later measured need justifie
 
 ### Phase 2 progress checklist
 
-- [ ] 1. Split the application into focused JavaScript modules
+- [x] 1. Split the application into focused JavaScript modules
 - [ ] 2. Run real-browser journeys in GitHub Actions
 - [ ] 3. Expand and validate the recipe catalog
 - [ ] 4. Improve nutrition feedback and customization
@@ -197,6 +206,19 @@ a static site and avoid adding a framework unless a later measured need justifie
 - [ ] 7. Add code-quality gates and prepare a verified deployment
 
 ### 1. Split the application into focused JavaScript modules
+
+Completed September 9, 2026. `app.js` was reduced from 1,420 to 715 lines and now coordinates
+initialization, DOM events, form state, and session transitions. Focused modules own utilities,
+guarded storage, profile data and migration, plan persistence and validation, meal planning,
+groceries, rendering, and export. They use explicit ES-module imports and small dependency-injected
+APIs; the planning, persistence, grocery, profile, and formatting logic can run in the Node test
+harness without a browser DOM.
+
+The Java server now serves JavaScript files beneath `modules/` while continuing to block private
+project directories. The service-worker app shell includes every module under cache version `v9`.
+Existing storage keys and planner schema version remain unchanged. The release suite passed, and a
+Chromium journey verified dietary generation, swap, favorite, grocery checkoff, reload, exact guest
+conversion, download, PDF output, and offline revisit without page errors.
 
 Move profile management, persistence, plan generation, grocery calculations, rendering, and export
 logic out of the roughly 1,300-line `app.js`. Give each module a small public API, keep DOM wiring in

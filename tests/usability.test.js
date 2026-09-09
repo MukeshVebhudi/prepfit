@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
+const { loadAppSources } = require("./load-app");
 const { RECIPES } = require("../recipe-data.js");
 
 const root = path.join(__dirname, "..");
@@ -38,8 +39,8 @@ const context = vm.createContext({
     return elements.get(selector);
   } },
 });
-for (const file of ["nutrition-data.js", "recipe-data.js", "plan-math.js", "app.js"]) {
-  vm.runInContext(fs.readFileSync(path.join(root, file), "utf8").replace(/^initialize\(\);$/m, ""), context);
+for (const source of loadAppSources(root)) {
+  vm.runInContext(source, context);
 }
 vm.runInContext(`
 const settings = { ...DEFAULTS, dailyTarget: 150, excluded: [], days: 7, mealMode: 'batch' };

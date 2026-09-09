@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
+const { loadAppSources } = require("./load-app");
 
 const values = new Map();
 const localStorage = {
@@ -20,9 +21,8 @@ const context = vm.createContext({
   assert,
 });
 
-for (const file of ["nutrition-data.js", "recipe-data.js", "plan-math.js", "app.js"]) {
-  vm.runInContext(fs.readFileSync(path.join(__dirname, "..", file), "utf8")
-    .replace(/^initialize\(\);$/m, ""), context);
+for (const source of loadAppSources(path.join(__dirname, ".."))) {
+  vm.runInContext(source, context);
 }
 
 vm.runInContext(`

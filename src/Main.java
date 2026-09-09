@@ -97,7 +97,7 @@ public class Main {
         }
 
         String topLevelDir = relativeFile.getName(0).toString();
-        return ("assets".equals(topLevelDir) || ".well-known".equals(topLevelDir))
+        return ("assets".equals(topLevelDir) || "modules".equals(topLevelDir) || ".well-known".equals(topLevelDir))
                 && CONTENT_TYPES.containsKey(extension(relativeFile));
     }
 
