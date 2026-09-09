@@ -8,18 +8,19 @@
   --surface-solid: rgba(255, 255, 255, 0.94);
   --surface-soft: rgba(245, 249, 246, 0.86);
   --ink: #14201a;
-  --muted: #65736c;
+  --muted: #596860;
   --line: rgba(25, 45, 35, 0.085);
   --line-strong: rgba(25, 45, 35, 0.16);
   --accent: #147858;
   --accent-strong: #0c5f45;
   --accent-soft: #dff3ea;
-  --blue: #2f6f9e;
+  --blue: #24577b;
   --blue-soft: #e2eff7;
-  --orange: #d96f43;
+  --orange: #963d20;
   --orange-soft: #f8e7dc;
-  --yellow: #c79a2d;
+  --yellow: #70530b;
   --danger: #b94949;
+  --focus: #135f9b;
   --shadow: 0 16px 48px rgba(31, 48, 39, 0.095);
   --shadow-soft: 0 8px 22px rgba(31, 48, 39, 0.06);
   --shadow-hover: 0 24px 50px rgba(31, 48, 39, 0.12);
@@ -50,6 +51,7 @@ body[data-theme="evening"] {
   --orange-soft: rgba(242, 154, 115, 0.17);
   --yellow: #e2c76b;
   --danger: #f28b8b;
+  --focus: #9bd5ff;
   --shadow: 0 18px 54px rgba(0, 0, 0, 0.26);
   --shadow-soft: 0 8px 22px rgba(0, 0, 0, 0.17);
   --shadow-hover: 0 24px 52px rgba(0, 0, 0, 0.3);
@@ -178,8 +180,14 @@ select:focus,
 button:focus-visible,
 .segmented input:focus-visible + span,
 .chip-grid input:focus-visible + span {
-  outline: 3px solid color-mix(in srgb, var(--blue) 30%, transparent);
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
+}
+
+a:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 0.2rem;
 }
 
 h1,
@@ -555,6 +563,17 @@ body[data-theme="evening"] .primary-button {
   }
 }
 
+.safety-source {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.safety-source a {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
 .dashboard-shell {
   display: grid;
   grid-template-columns: minmax(20rem, 24rem) minmax(0, 1fr);
@@ -689,8 +708,12 @@ legend {
 .segmented input,
 .chip-grid input {
   position: absolute;
+  width: 1px;
+  min-height: 1px;
+  margin: 0;
+  clip-path: inset(50%);
   opacity: 0;
-  pointer-events: none;
+  overflow: hidden;
 }
 
 .segmented span,
@@ -1202,6 +1225,19 @@ body[data-theme="evening"] .meal-icon {
     padding: 0.85rem;
   }
 
+  .jump-link:not([hidden]) {
+    position: sticky;
+    top: max(0.5rem, env(safe-area-inset-top));
+    z-index: 4;
+    justify-content: center;
+    min-height: var(--tap);
+    padding: 0.65rem 0.8rem;
+    color: #fff;
+    background: var(--accent-strong);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-soft);
+  }
+
   .meal-top {
     grid-template-columns: 1fr;
   }
@@ -1494,4 +1530,143 @@ body[data-theme="evening"] .meal-icon {
   .prep-schedule {
     margin-top: 0.035in;
   }
+}
+
+@media print {
+  @page {
+    margin: 0.5in;
+  }
+
+  html,
+  body {
+    font-size: 11pt;
+    line-height: 1.35;
+  }
+
+  .dashboard-shell,
+  .workspace,
+  .summary-card,
+  .side-grid,
+  .meal-grid,
+  .stat-grid,
+  .grocery-list,
+  .prep-schedule {
+    grid-template-columns: 1fr;
+    gap: 10pt;
+  }
+
+  .panel,
+  .day-card {
+    padding: 10pt;
+    break-inside: auto;
+  }
+
+  .meal-card,
+  .grocery-category,
+  .prep-block,
+  .stat {
+    padding: 8pt;
+    break-inside: avoid;
+  }
+
+  .day-card + .day-card {
+    break-before: page;
+  }
+
+  h2 {
+    font-size: 16pt;
+  }
+
+  h3 {
+    font-size: 12pt;
+  }
+
+  p,
+  li,
+  small,
+  .meal-card small,
+  .meal-kicker,
+  .day-header p,
+  .prep-block p,
+  .empty-state,
+  .grocery-category label strong,
+  .grocery-category label small {
+    font-size: 10pt;
+    line-height: 1.35;
+  }
+
+  .eyebrow,
+  .meal-kicker,
+  .stat span,
+  .badge {
+    font-size: 8.5pt;
+  }
+
+  .stat strong {
+    font-size: 10.5pt;
+  }
+
+  .grocery-category input {
+    display: inline-block;
+    width: 11pt;
+    min-height: 11pt;
+    margin-right: 5pt;
+  }
+
+  .grocery-category label {
+    display: grid;
+    grid-template-columns: 14pt minmax(0, 1fr);
+  }
+
+  .safety-source {
+    font-size: 9pt;
+  }
+}
+
+/* Nutrition reference page and measurement note. */
+.nutrition-note {
+  margin-top: 0.7rem;
+}
+
+.nutrition-note a,
+.nutrition-reference-page a {
+  color: var(--accent-strong);
+  text-decoration: underline;
+}
+
+.nutrition-reference-page {
+  display: grid;
+  gap: 1.2rem;
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: clamp(1rem, 4vw, 2rem);
+}
+
+.nutrition-reference-page .panel {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.nutrition-reference-page ul {
+  padding-left: 1.4rem;
+}
+
+.nutrition-reference-page li + li {
+  margin-top: 0.5rem;
+}
+
+.nutrition-reference-entry {
+  border-top: 1px solid var(--line-strong);
+  padding-top: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.nutrition-reference-entry summary {
+  cursor: pointer;
+  padding: 0.4rem 0;
+  font-weight: 800;
+}
+
+.nutrition-reference-entry p {
+  margin-top: 0.6rem;
 }

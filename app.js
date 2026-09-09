@@ -5,6 +5,7 @@ const STORAGE_KEYS = {
   accounts: "prepfit-accounts-v1",
   currentAccount: "prepfit-current-account-v1",
 };
+const PLANNER_SCHEMA_VERSION = 1;
 
 const DEFAULTS = {
   goalMode: "daily",
@@ -56,15 +57,9 @@ const dom = {
   authView: document.querySelector("#auth-view"),
   authForm: document.querySelector("#auth-form"),
   authUsername: document.querySelector("#auth-username"),
-  authPasscode: document.querySelector("#auth-passcode"),
   authSubmit: document.querySelector("#auth-submit"),
   authMessage: document.querySelector("#auth-message"),
-  authLoginTab: document.querySelector("#auth-login-tab"),
-  authRegisterTab: document.querySelector("#auth-register-tab"),
   savedProfiles: document.querySelector("#saved-profiles"),
-  gmailForm: document.querySelector("#gmail-form"),
-  gmailAddress: document.querySelector("#gmail-address"),
-  gmailSubmit: document.querySelector("#gmail-submit"),
   accountChip: document.querySelector("#account-chip"),
   accountName: document.querySelector("#account-name"),
   logoutAccount: document.querySelector("#logout-account"),
@@ -76,14 +71,17 @@ const dom = {
 
 let favorites = new Set();
 let currentAccount = null;
-let authMode = "login";
+let profileAction = "create";
 let state = null;
 let lastGroceryText = "";
+let purchasedItems = new Map();
+let storageMessage = "";
 
 initialize();
 
 function initialize() {
   applyTheme(loadTheme());
+  migrateLegacyProfiles();
   bindEvents();
   restoreSession();
   registerServiceWorker();
@@ -94,7 +92,10 @@ function registerServiceWorker() {
   if (!["http:", "https:"].includes(window.location.protocol)) return;
 
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js").catch(() => {
+    navigator.serviceWorker.register("./service-worker.js", {
+      scope: "./",
+      updateViaCache: "none",
+    }).catch(() => {
       // The app still works normally if offline caching is unavailable.
     });
   });
@@ -123,6 +124,7 @@ function bindEvents() {
   });
 
   dom.mealPlan.addEventListener("click", handleMealAction);
+  dom.groceryList.addEventListener("change", handleGroceryChange);
   dom.randomize.addEventListener("click", () => generatePlan({ shuffle: true }));
   dom.themeToggle.addEventListener("click", toggleTheme);
   dom.printPlan.addEventListener("click", () => window.print());
@@ -131,16 +133,10 @@ function bindEvents() {
   dom.resetPlan.addEventListener("click", resetSettings);
   dom.clearFavorites.addEventListener("click", clearFavorites);
   dom.authForm.addEventListener("submit", handleAuthSubmit);
-  dom.gmailForm.addEventListener("submit", handleGmailSubmit);
   dom.savedProfiles.addEventListener("click", handleSavedProfileClick);
-  dom.authLoginTab.addEventListener("click", () => setAuthMode("login"));
-  dom.authRegisterTab.addEventListener("click", () => setAuthMode("register"));
   dom.logoutAccount.addEventListener("click", logoutAccount);
   dom.guestStart.addEventListener("click", startGuestSession);
-  dom.guestUpgrade.addEventListener("click", () => {
-    logoutAccount();
-    setAuthMode("register");
-  });
+  dom.guestUpgrade.addEventListener("click", beginGuestConversion);
 }
 
 function restoreSession() {
@@ -155,87 +151,55 @@ function restoreSession() {
   dom.accountChip.hidden = true;
   dom.accountName.textContent = "Guest";
   renderSavedProfiles();
-  setAuthMode("login");
+  setProfileAction("create");
   dom.authUsername.focus();
 }
 
-async function handleAuthSubmit(event) {
+function handleAuthSubmit(event) {
   event.preventDefault();
-  const username = normalizeUsername(dom.authUsername.value);
-  const passcode = dom.authPasscode.value;
+  const name = displayUsername(dom.authUsername.value);
 
-  if (username.length < 3) {
-    showAuthMessage("Use at least 3 characters for the username.", "danger");
-    return;
-  }
-
-  if (passcode.length < 4) {
-    showAuthMessage("Use at least 4 characters for the passcode.", "danger");
+  if (name.length < 2) {
+    showAuthMessage("Use at least 2 characters for the profile name.", "danger");
     return;
   }
 
   const accounts = loadAccounts();
-  const passcodeHash = await hashPasscode(username, passcode);
+  if (profileNameExists(accounts, name, profileAction === "convert" ? "guest" : null)) {
+    showAuthMessage("A profile with that name already exists in this browser.", "danger");
+    return;
+  }
 
-  if (authMode === "register") {
-    if (accounts[username]) {
-      showAuthMessage("That username already exists on this device.", "danger");
+  const id = uniqueProfileId(name, accounts);
+  const account = { id, name, createdAt: new Date().toISOString() };
+  let convertedGuestId = null;
+  if (profileAction === "convert" && currentAccount?.guest) {
+    if (!copyProfileData(currentAccount.id, id)) {
+      showAuthMessage("The guest plan could not be moved because browser storage is unavailable.", "danger");
       return;
     }
-
-    accounts[username] = {
-      id: username,
-      name: displayUsername(dom.authUsername.value),
-      passcodeHash,
-      createdAt: new Date().toISOString(),
-    };
-    saveAccounts(accounts);
-    renderSavedProfiles();
-    signIn(accounts[username]);
-    showAuthMessage("Account created.", "success");
+    convertedGuestId = currentAccount.id;
+    delete accounts[convertedGuestId];
+  }
+  accounts[id] = account;
+  if (!saveAccounts(accounts)) {
+    if (convertedGuestId) removeProfileData(id);
+    showAuthMessage("The profile could not be saved in this browser.", "danger");
     return;
   }
-
-  if (!accounts[username] || accounts[username].passcodeHash !== passcodeHash) {
-    showAuthMessage("Username or passcode is incorrect.", "danger");
-    return;
-  }
-
-  signIn(accounts[username]);
-}
-
-function handleGmailSubmit(event) {
-  event.preventDefault();
-  const email = normalizeEmail(dom.gmailAddress.value);
-
-  if (!isGmailAddress(email)) {
-    showAuthMessage("Enter a valid Gmail address ending in @gmail.com.", "danger");
-    return;
-  }
-
-  const accounts = loadAccounts();
-  const id = gmailAccountId(email);
-  if (!accounts[id]) {
-    accounts[id] = {
-      id,
-      name: email,
-      email,
-      provider: "gmail-local",
-      createdAt: new Date().toISOString(),
-    };
-    saveAccounts(accounts);
-    renderSavedProfiles();
-  }
-
-  signIn(accounts[id]);
-  showAuthMessage("Local Gmail profile opened on this device.", "success");
+  if (convertedGuestId) removeProfileData(convertedGuestId);
+  renderSavedProfiles();
+  signIn(account);
 }
 
 function startGuestSession() {
   const accounts = loadAccounts();
   if (!accounts.guest) {
     accounts.guest = { id: "guest", name: "Guest", guest: true, createdAt: new Date().toISOString() };
-    saveAccounts(accounts);
+    if (!saveAccounts(accounts)) {
+      showAuthMessage("The guest profile could not be saved in this browser.", "danger");
+      return;
+    }
     renderSavedProfiles();
   }
 
@@ -266,12 +230,11 @@ function signIn(account) {
   dom.accountChip.hidden = false;
   dom.guestHint.hidden = !account.guest;
   dom.authForm.reset();
-  dom.gmailForm.reset();
   showAuthMessage("");
 
   favorites = loadAccountFavorites();
   restoreSettings();
-  generatePlan({ shuffle: true });
+  if (!restorePlannerState()) generatePlan({ shuffle: true });
 }
 
 function logoutAccount() {
@@ -279,6 +242,8 @@ function logoutAccount() {
   state = null;
   favorites = new Set();
   lastGroceryText = "";
+  purchasedItems = new Map();
+  storageMessage = "";
   safeRemoveItem(STORAGE_KEYS.currentAccount);
   document.body.classList.remove("is-authenticated");
   dom.accountChip.hidden = true;
@@ -286,23 +251,25 @@ function logoutAccount() {
   dom.guestHint.hidden = true;
   dom.jumpToPlan.hidden = true;
   dom.authForm.reset();
-  dom.gmailForm.reset();
   renderSavedProfiles();
-  setAuthMode("login");
-  showAuthMessage("Signed out. Choose an account to continue.");
+  setProfileAction("create");
+  showAuthMessage("Choose a local profile or create another.");
   dom.authUsername.focus();
 }
 
-function setAuthMode(mode) {
-  authMode = mode;
-  const isRegister = mode === "register";
-  dom.authLoginTab.setAttribute("aria-pressed", String(!isRegister));
-  dom.authRegisterTab.setAttribute("aria-pressed", String(isRegister));
-  dom.authSubmit.textContent = isRegister ? "Create account" : "Log in";
-  dom.authPasscode.setAttribute("autocomplete", isRegister ? "new-password" : "current-password");
-  showAuthMessage(isRegister
-    ? "Accounts are stored locally in this browser."
-    : "Log in with a local profile on this device.");
+function setProfileAction(action) {
+  profileAction = action;
+  dom.authSubmit.textContent = action === "convert" ? "Move guest plan" : "Create local profile";
+  showAuthMessage(action === "convert"
+    ? "Choose a name. The exact guest plan, favorites, and shopping progress will move with it."
+    : "Profiles and their plans remain only in this browser.");
+}
+
+function beginGuestConversion() {
+  if (!currentAccount?.guest) return;
+  document.body.classList.remove("is-authenticated");
+  setProfileAction("convert");
+  dom.authUsername.focus();
 }
 
 function showAuthMessage(message, tone = "") {
@@ -315,11 +282,23 @@ function showAuthMessage(message, tone = "") {
 }
 
 function loadAccounts() {
-  return parseJson(localStorage.getItem(STORAGE_KEYS.accounts)) || {};
+  const saved = parseJson(safeGetItem(STORAGE_KEYS.accounts));
+  if (!saved || typeof saved !== "object" || Array.isArray(saved)) return Object.create(null);
+  return Object.entries(saved).reduce((accounts, [key, account]) => {
+    if (!account || typeof account !== "object") return accounts;
+    const id = String(account.id || key);
+    accounts[id] = {
+      id,
+      name: displayUsername(account.name || id) || "Local profile",
+      createdAt: account.createdAt || new Date().toISOString(),
+      ...(account.guest || id === "guest" ? { guest: true } : {}),
+    };
+    return accounts;
+  }, Object.create(null));
 }
 
 function saveAccounts(accounts) {
-  safeSetItem(STORAGE_KEYS.accounts, JSON.stringify(accounts));
+  return safeSetItem(STORAGE_KEYS.accounts, JSON.stringify(accounts));
 }
 
 function renderSavedProfiles() {
@@ -336,7 +315,7 @@ function renderSavedProfiles() {
         <span class="profile-avatar" aria-hidden="true">${escapeHtml(profileInitials(account))}</span>
         <span class="profile-meta">
           <strong>${escapeHtml(account.name)}</strong>
-          <span>${escapeHtml(account.guest ? "Guest session" : account.provider === "gmail-local" ? "Local Gmail profile" : "Local PrepFit account")}</span>
+          <span>${escapeHtml(account.guest ? "Guest profile in this browser" : "Local profile in this browser")}</span>
         </span>
       </button>
     `).join("")}
@@ -359,7 +338,7 @@ function accountStorageKey(type) {
     return STORAGE_KEYS[type];
   }
 
-  return `prepfit-account:${currentAccount.id}:${type}`;
+  return profileStorageKey(currentAccount.id, type);
 }
 
 function loadAccountFavorites() {
@@ -372,42 +351,87 @@ function loadAccountFavorites() {
   return loadSet(STORAGE_KEYS.favorites);
 }
 
-function normalizeUsername(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]/g, "");
-}
-
-function normalizeEmail(value) {
-  return String(value || "").trim().toLowerCase();
-}
-
-function isGmailAddress(value) {
-  return /^[^\s@]+@gmail\.com$/.test(value);
-}
-
-function gmailAccountId(email) {
-  return `gmail:${email}`;
-}
-
 function displayUsername(value) {
   return String(value || "").trim().replace(/\s+/g, " ").slice(0, 24);
 }
 
-async function hashPasscode(username, passcode) {
-  const text = `prepfit:${username}:${passcode}`;
-  if (window.crypto?.subtle) {
-    const bytes = new TextEncoder().encode(text);
-    const digest = await window.crypto.subtle.digest("SHA-256", bytes);
-    return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+function uniqueProfileId(name, accounts, prefix = "profile") {
+  const slug = String(name || "profile").toLowerCase()
+    .normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 32) || "profile";
+  let id = `${prefix}:${slug}`;
+  let suffix = 2;
+  while (Object.prototype.hasOwnProperty.call(accounts, id) || isReservedProfileId(id)) {
+    id = `${prefix}:${slug}-${suffix}`;
+    suffix += 1;
   }
+  return id;
+}
 
-  let hash = 0;
-  for (let index = 0; index < text.length; index += 1) {
-    hash = ((hash << 5) - hash + text.charCodeAt(index)) | 0;
+function profileNameExists(accounts, name, ignoredId = null) {
+  const normalized = displayUsername(name).toLowerCase();
+  return Object.values(accounts).some((account) =>
+    account.id !== ignoredId && displayUsername(account.name).toLowerCase() === normalized);
+}
+
+function isReservedProfileId(id) {
+  return ["guest", "__proto__", "prototype", "constructor", "toString"].includes(String(id));
+}
+
+function profileStorageKey(id, type) {
+  return `prepfit-account:${id}:${type}`;
+}
+
+function copyProfileData(fromId, toId) {
+  for (const type of ["settings", "planner", "favorites"]) {
+    const value = safeGetItem(profileStorageKey(fromId, type));
+    if (value !== null && !safeSetItem(profileStorageKey(toId, type), value)) return false;
   }
-  return String(hash);
+  return true;
+}
+
+function removeProfileData(id) {
+  let removed = true;
+  ["settings", "planner", "favorites"].forEach((type) => {
+    if (!safeRemoveItem(profileStorageKey(id, type))) removed = false;
+  });
+  return removed;
+}
+
+function migrateLegacyProfiles() {
+  const raw = parseJson(safeGetItem(STORAGE_KEYS.accounts));
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return;
+  const migrated = Object.create(null);
+  const idChanges = new Map();
+  let changed = false;
+
+  Object.entries(raw).forEach(([key, legacy]) => {
+    if (!legacy || typeof legacy !== "object") {
+      changed = true;
+      return;
+    }
+    const oldId = String(legacy.id || key);
+    const name = displayUsername(legacy.name || legacy.email || oldId) || "Local profile";
+    const needsSafeId = isReservedProfileId(oldId) && oldId !== "guest";
+    const id = needsSafeId ? uniqueProfileId(name, migrated, "legacy") : oldId;
+    if (needsSafeId) {
+      copyProfileData(oldId, id);
+      idChanges.set(oldId, id);
+      changed = true;
+    }
+    if (legacy.passcodeHash || legacy.email || legacy.provider) changed = true;
+    migrated[id] = {
+      id,
+      name,
+      createdAt: legacy.createdAt || new Date().toISOString(),
+      ...(oldId === "guest" || legacy.guest ? { guest: true } : {}),
+    };
+  });
+
+  if (changed && saveAccounts(migrated)) {
+    const currentId = safeGetItem(STORAGE_KEYS.currentAccount);
+    if (idChanges.has(currentId)) safeSetItem(STORAGE_KEYS.currentAccount, idChanges.get(currentId));
+  }
 }
 
 function generatePlan(options = {}) {
@@ -416,38 +440,58 @@ function generatePlan(options = {}) {
   }
 
   const settings = readSettings();
-  saveSettings(settings);
+  const settingsSaved = saveSettings(settings);
   updateGoalLabel(settings);
 
-  const plan = buildPlan(settings, options);
-  const groceries = aggregateGroceries(plan.days, settings.people);
+  let plan;
+  try {
+    plan = buildPlan(settings, options);
+  } catch (error) {
+    console.error("PrepFit nutrition calculation failed", error);
+    plan = { days: [], missingTypes: [], conflict: "Nutrition could not be calculated from the ingredient references. No plan is shown. Check ingredient units and preparation states before trying again." };
+  }
+  const groceries = aggregateGroceries(plan.days, settings.people, settings.powderProtein);
   const averages = averageMacros(plan.days);
-  const warning = buildWarning(plan, settings);
+  const warning = buildWarning(plan, settings, averages);
+  purchasedItems = reconcilePurchases(groceries, purchasedItems);
 
   state = { settings, plan, groceries, averages, warning };
   lastGroceryText = groceryText(groceries);
+  const planSaved = savePlannerState();
+  renderCurrentState(warning || (settingsSaved && planSaved
+    ? "Auto-saved. Changes regenerate the plan."
+    : "Plan updated, but browser storage could not save it."));
+}
 
-  renderSummary(settings, plan, averages, warning);
-  renderMeals(plan, settings);
-  renderGroceries(groceries);
-  renderPrepSchedule(plan, settings);
+function renderCurrentState(note = "") {
+  if (!state) return;
+  renderSummary(state.settings, state.plan, state.averages, state.warning);
+  renderMeals(state.plan, state.settings);
+  renderGroceries(state.groceries);
+  renderPrepSchedule(state.plan, state.settings);
   renderFavorites();
-  dom.plannerNote.textContent = warning || "Auto-saved. Changes regenerate the plan.";
-  dom.jumpToPlan.hidden = false;
+  dom.plannerNote.textContent = storageMessage || note || state.warning;
+  dom.jumpToPlan.hidden = !state.plan.days.length;
+  dom.printPlan.disabled = !state.plan.days.length;
+  dom.downloadPlan.disabled = !state.plan.days.length;
+  dom.copyGroceries.disabled = !state.groceries.length;
 }
 
 function readSettings() {
   const data = new FormData(dom.form);
-  const days = clamp(numberFrom(data.get("days"), DEFAULTS.days), 1, 7);
-  const people = clamp(numberFrom(data.get("people"), DEFAULTS.people), 1, 8);
+  const days = integerInRange(data.get("days"), DEFAULTS.days, 1, 7);
+  const people = integerInRange(data.get("people"), DEFAULTS.people, 1, 8);
   const goalMode = oneOf(data.get("goalMode"), ["daily", "weekly"], DEFAULTS.goalMode);
-  const rawProtein = clamp(numberFrom(data.get("proteinGoal"), DEFAULTS.proteinGoal), 0, 9999);
+  const rawProtein = normalizedProteinGoal(data.get("proteinGoal"), goalMode, days, DEFAULTS.proteinGoal);
   const dailyTarget = goalMode === "weekly" ? rawProtein / days : rawProtein;
+  dom.form.elements.days.value = days;
+  dom.form.elements.people.value = people;
+  dom.form.elements.proteinGoal.value = rawProtein;
 
   return {
     goalMode,
     proteinGoal: rawProtein,
-    dailyTarget: clamp(dailyTarget, 30, 340),
+    dailyTarget,
     powderProtein: clamp(numberFrom(data.get("powderProtein"), 0), 0, 140),
     people,
     days,
@@ -464,59 +508,73 @@ function readSettings() {
 }
 
 function buildPlan(settings, options = {}) {
-  const dayCount = settings.days;
   const usedNames = new Set();
   const days = [];
   const seed = options.shuffle ? Math.random() : 0;
-
-  if (settings.mealMode === "batch") {
-    const selected = selectDayMeals(settings, usedNames, seed);
-    for (let day = 1; day <= dayCount; day += 1) {
-      days.push(makeDay(day, selected, settings));
-    }
-    return { days, relaxed: selected.relaxed, unavailable: selected.unavailable };
+  if (settings.powderProtein && !recipeEligible({
+    proteinType: "vegetarian", ingredients: [supplementalPowderIngredient(settings.powderProtein)],
+  }, "Breakfast", settings)) {
+    return { days, missingTypes: [], conflict: "The supplemental whey powder conflicts with your avoided ingredients. Set supplemental protein to zero or change the exclusion; restrictions have not been relaxed." };
   }
+  const missingTypes = MEAL_TYPES.filter((type) => !recipeCandidates(type, settings).length);
+  if (missingTypes.length) return { days, missingTypes };
 
-  let relaxed = false;
-  let unavailable = false;
-  for (let day = 1; day <= dayCount; day += 1) {
-    const selected = selectDayMeals(settings, usedNames, seed + day);
+  const batch = settings.mealMode === "batch"
+    ? selectDayMeals(settings, usedNames, seed) : null;
+  for (let day = 1; day <= settings.days; day += 1) {
+    const selected = batch || selectDayMeals(settings, usedNames, seed + day);
     selected.meals.forEach((meal) => usedNames.add(meal.name));
-    relaxed = relaxed || selected.relaxed;
-    unavailable = unavailable || selected.unavailable;
     days.push(makeDay(day, selected, settings));
   }
-
-  return { days, relaxed, unavailable };
+  return { days, missingTypes: [] };
 }
 
 function selectDayMeals(settings, usedNames, seed = 0) {
-  const meals = MEAL_TYPES.map((type) => {
-    const candidates = recipeCandidates(type, settings);
-    const relaxedCandidates = candidates.length ? candidates : recipeCandidates(type, { ...settings, excluded: [] });
-    const usable = relaxedCandidates.length ? relaxedCandidates : RECIPES[type.toLowerCase()];
-    return pickBestRecipe(type, usable, settings, usedNames, seed);
-  });
+  const candidates = MEAL_TYPES.map((type) =>
+    shortlistCandidates(type, recipeCandidates(type, settings), settings, usedNames, seed));
+  let best = null;
 
-  const currentProtein = meals.reduce((sum, meal) => sum + meal.macros.protein, 0);
-  const targetFromFood = Math.max(30, settings.dailyTarget - settings.powderProtein);
-  const scaledMeals = scaleMealsToProtein(meals, targetFromFood, settings);
+  candidates[0].forEach((breakfast) => candidates[1].forEach((lunch) => candidates[2].forEach((dinner) => {
+    const rawMeals = [breakfast, lunch, dinner].map(cloneRecipe);
+    const meals = scaleMealsToTargets(rawMeals, settings);
+    const actual = macrosForDay(meals, settings.powderProtein);
+    const preference = rawMeals.reduce((sum, meal, index) =>
+      sum + recipeScore(meal, MEAL_TYPES[index], settings, usedNames, seed, index), 0);
+    const score = targetFitScore(actual, settings) * 100 + preference;
+    if (!best || score < best.score) best = { score, meals };
+  })));
 
-  return {
-    meals: scaledMeals,
-    relaxed: meals.some((meal) => meal.relaxed),
-    unavailable: meals.some((meal) => meal.unavailable),
-    originalProtein: currentProtein,
-  };
+  return { meals: best.meals };
+}
+
+function shortlistCandidates(type, candidates, settings, usedNames, seed) {
+  const foodProtein = Math.max(0, settings.dailyTarget - settings.powderProtein) / 3;
+  return [...candidates].sort((a, b) => {
+    const score = (recipe) => {
+      let value = recipeScore(recipe, type, settings, usedNames, seed, 0);
+      value += Math.abs(recipe.macros.protein - foodProtein) * 2;
+      if (settings.calorieGoal) value += Math.abs(recipe.macros.calories - settings.calorieGoal / 3) * 0.12;
+      if (settings.carbGoal) value += Math.abs(recipe.macros.carbs - settings.carbGoal / 3) * 0.2;
+      if (settings.fatGoal) value += Math.abs(recipe.macros.fat - settings.fatGoal / 3) * 0.35;
+      return value;
+    };
+    return score(a) - score(b);
+  }).slice(0, 10);
 }
 
 function recipeCandidates(type, settings) {
-  return RECIPES[type.toLowerCase()].filter((recipe) => {
-    const cuisineMatch = settings.cuisine === "random" || recipe.cuisine === settings.cuisine || type === "Breakfast";
-    const proteinMatch = type === "Breakfast" || recipe.proteinType === settings.meat;
-    const avoids = settings.excluded.some((term) => recipe.searchText.includes(term));
-    return cuisineMatch && proteinMatch && !avoids;
-  });
+  return RECIPES[type.toLowerCase()].filter((recipe) => recipeEligible(recipe, type, settings));
+}
+
+function recipeEligible(recipe, type, settings) {
+  const cuisineMatch = settings.cuisine === "random" || recipe.cuisine === settings.cuisine || type === "Breakfast";
+  const proteinMatch = settings.meat === "vegetarian"
+    ? recipe.proteinType === "vegetarian" && !recipe.ingredients.some((ingredient) =>
+      (INGREDIENT_TAGS[ingredient.name] || []).some((tag) => tag === "meat" || tag === "fish"))
+    : type === "Breakfast" || recipe.proteinType === settings.meat;
+  const avoids = settings.excluded.some((term) => recipe.ingredients.some((ingredient) =>
+    (ingredient.name.toLowerCase().includes(term) || (ingredient.componentOf || "").includes(term)) || (INGREDIENT_TAGS[ingredient.name] || []).includes(term)));
+  return cuisineMatch && proteinMatch && !avoids;
 }
 
 function pickBestRecipe(type, candidates, settings, usedNames, seed) {
@@ -534,18 +592,12 @@ function pickBestRecipe(type, candidates, settings, usedNames, seed) {
 function recipeScore(recipe, type, settings, usedNames, seed, index) {
   let score = index * 0.5 + seededNoise(recipe.name, seed) * 14;
   const macros = recipe.macros;
-  const targetMealProtein = (settings.dailyTarget - settings.powderProtein) / 3;
 
-  score += Math.abs(macros.protein - targetMealProtein) * 2.2;
-  if (macros.calories > MAX_MEAL_CALORIES) score += (macros.calories - MAX_MEAL_CALORIES) * 0.9;
   if (usedNames.has(recipe.name)) score += 240;
   if (favorites.has(recipe.name)) score -= 55;
 
   if (settings.budget === "budget") score += recipe.cost * 20;
   if (settings.budget === "high-protein") score -= macros.protein * 1.8;
-  if (settings.calorieGoal) score += Math.abs(macros.calories - settings.calorieGoal / 3) * 0.16;
-  if (settings.carbGoal) score += Math.abs(macros.carbs - settings.carbGoal / 3) * 0.24;
-  if (settings.fatGoal) score += Math.abs(macros.fat - settings.fatGoal / 3) * 0.45;
   if (type === "Breakfast" && recipe.cuisine === "classic") score -= 6;
 
   return score;
@@ -553,17 +605,7 @@ function recipeScore(recipe, type, settings, usedNames, seed, index) {
 
 function makeDay(day, selected, settings) {
   const meals = selected.meals.map((meal, index) => ({ ...meal, label: MEAL_TYPES[index] }));
-  const macros = meals.reduce(sumMacros, emptyMacros());
-  return {
-    day,
-    meals,
-    macros: addMacros(macros, {
-      protein: settings.powderProtein,
-      calories: settings.powderProtein ? Math.round(settings.powderProtein * 4.8) : 0,
-      carbs: settings.powderProtein ? 3 : 0,
-      fat: settings.powderProtein ? 1 : 0,
-    }),
-  };
+  return { day, meals, macros: macrosForDay(meals, settings.powderProtein) };
 }
 
 function swapMeal(dayIndex, mealIndex) {
@@ -579,34 +621,56 @@ function swapMeal(dayIndex, mealIndex) {
     .filter((meal) => meal.name !== currentMeal.name)
     .filter((meal) => settings.mealMode === "batch" || !usedNames.has(meal.name));
 
-  const pool = candidates.length ? candidates : RECIPES[type.toLowerCase()].filter((meal) => meal.name !== currentMeal.name);
-  const replacement = capMeal(pickBestRecipe(type, pool, settings, usedNames, Math.random()));
-  replacement.label = currentMeal.label;
+  if (!candidates.length) {
+    dom.plannerNote.textContent = `No alternative ${type.toLowerCase()} matches your dietary restrictions and cuisine. Your current meal is unchanged. Change your filters to see more options.`;
+    return;
+  }
+  const baseMeals = currentDay.meals.map(normalizeMealPortion);
+  let bestSwap = null;
+  candidates.forEach((candidate) => {
+    const proposed = baseMeals.map((meal, index) => index === mealIndex ? cloneRecipe(candidate) : cloneRecipe(meal));
+    const meals = scaleMealsToTargets(proposed, settings);
+    const score = targetFitScore(macrosForDay(meals, settings.powderProtein), settings)
+      + recipeScore(candidate, type, settings, usedNames, Math.random(), mealIndex) / 100;
+    if (!bestSwap || score < bestSwap.score) bestSwap = { score, meals };
+  });
+  bestSwap.meals.forEach((meal, index) => { meal.label = MEAL_TYPES[index]; });
 
   if (settings.mealMode === "batch") {
     state.plan.days.forEach((day) => {
-      day.meals[mealIndex] = cloneRecipe(replacement);
-      day.meals[mealIndex].label = currentMeal.label;
+      day.meals = bestSwap.meals.map(cloneRecipe);
       day.macros = macrosForDay(day.meals, settings.powderProtein);
     });
   } else {
-    currentDay.meals[mealIndex] = replacement;
+    currentDay.meals = bestSwap.meals;
     currentDay.macros = macrosForDay(currentDay.meals, settings.powderProtein);
   }
 
-  state.groceries = aggregateGroceries(state.plan.days, settings.people);
+  state.groceries = aggregateGroceries(state.plan.days, settings.people, settings.powderProtein);
+  purchasedItems = reconcilePurchases(state.groceries, purchasedItems);
   state.averages = averageMacros(state.plan.days);
   lastGroceryText = groceryText(state.groceries);
-  renderSummary(settings, state.plan, state.averages, state.warning);
-  renderMeals(state.plan, settings);
-  renderGroceries(state.groceries);
-  renderPrepSchedule(state.plan, settings);
+  state.warning = buildWarning(state.plan, settings, state.averages);
+  const saved = savePlannerState();
+  renderCurrentState(state.warning || (saved
+    ? "Meal swapped and saved. Dietary restrictions preserved."
+    : "Meal swapped, but browser storage could not save it."));
 }
 
 function renderSummary(settings, plan, averages, warning) {
-  const actual = Math.round(averages.protein);
-  const delta = actual - Math.round(settings.dailyTarget);
-  const status = targetStatus(delta, settings.dailyTarget);
+  if (!plan.days.length) {
+    dom.summaryTitle.textContent = "No matching plan";
+    dom.summaryText.textContent = warning;
+    dom.summaryStats.innerHTML = "";
+    dom.planStatus.textContent = "No matches";
+    dom.planStatus.dataset.status = "unavailable";
+    return;
+  }
+  const results = targetResults(averages, settings);
+  const outside = results.filter((result) => result.kind !== "near");
+  const status = outside.length
+    ? { kind: outside.some((result) => result.kind === "under") ? "under" : "over", label: `${outside.length} ${plural("target", outside.length)} outside range` }
+    : { kind: "near", label: "All targets near" };
 
   dom.summaryTitle.textContent = `${settings.days}-day ${settings.mealMode} plan`;
   dom.summaryText.textContent = warning || `${status.label}. ${settings.people} ${plural("person", settings.people)} with ${settings.days * settings.people * 3} planned meals.`;
@@ -616,8 +680,10 @@ function renderSummary(settings, plan, averages, warning) {
   const stats = [
     ["Duration", `${settings.days} ${plural("day", settings.days)}`],
     ["People", settings.people],
-    ["Protein target", `${Math.round(settings.dailyTarget)}g/day`],
-    ["Actual protein", `${actual}g/day`],
+    ...results.map((result) => [
+      nutritionTargetLabel(result.nutrient),
+      `${Math.round(result.actual)}${result.unit} / ${Math.round(result.target)}${result.unit} (${formatTargetDelta(result)})`,
+    ]),
     ["Powder", `${settings.powderProtein}g/day`],
     ["Cuisine", settings.cuisine === "random" ? "Mixed" : CUISINES[settings.cuisine]],
     ["Budget", budgetLabel(settings.budget)],
@@ -625,7 +691,7 @@ function renderSummary(settings, plan, averages, warning) {
     ["Avg carbs", `${Math.round(averages.carbs)}g`],
     ["Avg fat", `${Math.round(averages.fat)}g`],
     ["Total meals", settings.days * settings.people * 3],
-    ["Target status", status.short],
+    ["Target status", outside.length ? `${outside.length} outside tolerance` : "Within tolerance"],
   ];
 
   dom.summaryStats.innerHTML = stats.map(([label, value]) => `
@@ -638,7 +704,7 @@ function renderSummary(settings, plan, averages, warning) {
 
 function renderMeals(plan, settings) {
   if (!plan.days.length) {
-    dom.mealPlan.innerHTML = `<div class="empty-state">No meals available for those filters. Try removing one avoided ingredient.</div>`;
+    dom.mealPlan.innerHTML = `<div class="empty-state">No complete plan matches your choices. Review the unavailable meal types above and change your filters; avoided ingredients will never be added automatically.</div>`;
     return;
   }
 
@@ -701,6 +767,7 @@ function renderMeal(meal, dayIndex, mealIndex, servings, servingLabel = servings
           <small>${escapeHtml(source)}</small>
         </div>
       </div>
+      <p class="auth-hint">Estimated nutrition per serving; ingredient quantities below cover all listed servings.</p>
       <div class="badge-row" aria-label="Meal macros">
         <span class="badge protein">${Math.round(meal.macros.protein)}g protein</span>
         <span class="badge calories">${Math.round(meal.macros.calories)} kcal</span>
@@ -716,10 +783,10 @@ function renderMeal(meal, dayIndex, mealIndex, servings, servingLabel = servings
         <ol>${meal.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ol>
       </div>
       <div class="meal-actions">
-        <button class="icon-button" type="button" data-action="favorite" data-name="${escapeAttr(meal.name)}" aria-pressed="${favorites.has(meal.name)}">
+        <button class="icon-button" type="button" data-action="favorite" data-name="${escapeAttr(meal.name)}" aria-label="${favorites.has(meal.name) ? "Remove" : "Save"} ${escapeAttr(meal.name)} ${favorites.has(meal.name) ? "from" : "to"} favorites" aria-pressed="${favorites.has(meal.name)}">
           ${favorites.has(meal.name) ? "Saved" : "Save"}
         </button>
-        <button class="icon-button" type="button" data-action="swap" data-day="${dayIndex}" data-meal="${mealIndex}">Swap</button>
+        <button class="icon-button" type="button" data-action="swap" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Swap ${escapeAttr(meal.label)} ${escapeAttr(meal.name)}">Swap</button>
       </div>
     </article>
   `;
@@ -736,23 +803,61 @@ function renderGroceries(groceries) {
     <section class="grocery-category">
       <h3>${category}<span class="badge">${groups[category].length}</span></h3>
       <ul>
-        ${groups[category].map((item, index) => `
+        ${groups[category].map((item) => {
+          const key = groceryItemKey(item);
+          const checked = purchasedItems.get(key) === groceryQuantitySignature(item);
+          return `
           <li>
             <label>
-              <input type="checkbox" aria-label="Mark ${escapeAttr(item.name)} purchased" />
+              <input type="checkbox" data-grocery-key="${escapeAttr(key)}" ${checked ? "checked" : ""} aria-label="Mark ${escapeAttr(item.name)} purchased" />
               <span>
                 <strong>${escapeHtml(formatIngredient(item, 1))}</strong>
                 <small>${escapeHtml(marketHint(item))}</small>
               </span>
             </label>
           </li>
-        `).join("")}
+        `; }).join("")}
       </ul>
     </section>
   `).join("");
 }
 
+function handleGroceryChange(event) {
+  const checkbox = event.target.closest("input[data-grocery-key]");
+  if (!checkbox || !state) return;
+  const item = state.groceries.find((candidate) => groceryItemKey(candidate) === checkbox.dataset.groceryKey);
+  if (!item) return;
+  if (checkbox.checked) purchasedItems.set(checkbox.dataset.groceryKey, groceryQuantitySignature(item));
+  else purchasedItems.delete(checkbox.dataset.groceryKey);
+  const saved = savePlannerState();
+  dom.plannerNote.textContent = saved
+    ? "Shopping progress saved on this browser."
+    : "Shopping progress changed, but browser storage could not save it.";
+}
+
+function groceryItemKey(item) {
+  return `${item.name.toLowerCase()}|${normalizeUnit(item.unit)}`;
+}
+
+function groceryQuantitySignature(item) {
+  return Number(item.amount).toFixed(3);
+}
+
+function reconcilePurchases(groceries, purchases) {
+  const next = new Map();
+  groceries.forEach((item) => {
+    const key = groceryItemKey(item);
+    const signature = groceryQuantitySignature(item);
+    if (purchases.get(key) === signature) next.set(key, signature);
+  });
+  return next;
+}
+
 function renderPrepSchedule(plan, settings) {
+  if (!plan.days.length) {
+    dom.prepSchedule.innerHTML = `<p class="empty-state">A prep schedule will appear when a complete plan matches your choices.</p>`;
+    return;
+  }
   const meals = uniqueMeals(plan.days);
   const ingredients = new Set(meals.flatMap((meal) => meal.ingredients.map((item) => item.name)));
   const hasSauces = [...ingredients].some((name) => /sauce|salsa|hummus|tzatziki|oil|yogurt/i.test(name));
@@ -769,7 +874,7 @@ function renderPrepSchedule(plan, settings) {
     },
     hasGrains && {
       title: "Cook grains",
-      text: "Start rice, quinoa, pasta, or potatoes early. Slightly undercook grains for reheating, then spread them on a tray so steam escapes before packing.",
+      text: "Start grains and potatoes early. Weigh pasta dry and potatoes raw; measure rice, quinoa, and other grains after cooking in water. Follow the preparation state next to each quantity.",
     },
     hasProduce && {
       title: "Chop vegetables",
@@ -777,15 +882,21 @@ function renderPrepSchedule(plan, settings) {
     },
     {
       title: "Portion meals",
-      text: `Set out ${settings.days * settings.people * 3} containers or sections. Add carb base first, vegetables second, protein third, then sauce last or on the side.`,
+      text: `Set out ${settings.days * settings.people * 3} shallow containers or sections. Add carb base first, vegetables second, protein third, then sauce last or on the side. Refrigerate or freeze perishable food within 2 hours.`,
     },
     hasSauces && {
       title: "Store sauces separately",
       text: "Pack creamy, yogurt, lemon, hummus, and salsa-style sauces separately. Add them after reheating or right before eating.",
     },
     {
-      title: "Reheat notes",
-      text: "Reheat hot containers loosely covered until steaming. Stir once halfway through, then add cold greens, yogurt sauces, avocado, or lemon.",
+      title: "Store safely",
+      text: settings.days > 4
+        ? "Keep the refrigerator at 40°F (4°C) or below. Refrigerate only portions you will eat within 3 to 4 days and freeze the later portions on prep day. Thaw safely in the refrigerator, cold water, or microwave."
+        : "Keep the refrigerator at 40°F (4°C) or below and use refrigerated portions within 3 to 4 days. Freeze anything you will not eat in that window.",
+    },
+    {
+      title: "Reheat safely",
+      text: "Reheat leftovers to 165°F (74°C), measured with a food thermometer. Cover and stir microwave-heated food for even heating, then add cold greens, yogurt sauces, avocado, or lemon.",
     },
   ].filter(Boolean);
 
@@ -794,7 +905,10 @@ function renderPrepSchedule(plan, settings) {
       <h3>${escapeHtml(block.title)}</h3>
       <p>${escapeHtml(block.text)}</p>
     </section>
-  `).join("");
+  `).join("") + `
+    <p class="safety-source">Storage and reheating guidance:
+      <a href="https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/leftovers-and-food-safety" target="_blank" rel="noopener">USDA Leftovers and Food Safety</a>.
+    </p>`;
 }
 
 function renderFavorites() {
@@ -829,20 +943,22 @@ function handleMealAction(event) {
   }
 }
 
-function aggregateGroceries(days, people) {
+function aggregateGroceries(days, people, powderProtein = 0) {
   const map = new Map();
+  function add(ingredient) {
+    const amount = ingredientGrams(ingredient) * people;
+    const current = map.get(ingredient.name) || {
+      name: ingredient.name, unit: "g", amount: 0,
+      preparation: NUTRITION[ingredient.name].preparation,
+      category: groceryCategory(ingredient.name),
+    };
+    current.amount += amount;
+    map.set(ingredient.name, current);
+  }
   days.forEach((day) => {
-    day.meals.forEach((meal) => {
-      meal.ingredients.forEach((ingredient) => {
-        const unit = normalizeUnit(ingredient.unit);
-        const key = `${ingredient.name}|${unit}`;
-        const current = map.get(key) || { ...ingredient, unit, amount: 0, category: groceryCategory(ingredient.name) };
-        current.amount += ingredient.amount * people;
-        map.set(key, current);
-      });
-    });
+    day.meals.forEach((meal) => meal.ingredients.forEach(add));
+    if (powderProtein) add(supplementalPowderIngredient(powderProtein));
   });
-
   return [...map.values()].sort((a, b) => {
     const categoryDelta = CATEGORIES.indexOf(a.category) - CATEGORIES.indexOf(b.category);
     return categoryDelta || a.name.localeCompare(b.name);
@@ -878,7 +994,7 @@ async function copyGroceries() {
 }
 
 function downloadPlan() {
-  if (!state) return;
+  if (!state || !state.plan.days.length) return;
   const lines = state.plan.days.map((day) => {
     const meals = day.meals.map((meal) => `  ${meal.label}: ${meal.name} (${Math.round(meal.macros.protein)}g protein)`).join("\n");
     return `Day ${day.day}\n${meals}`;
@@ -895,6 +1011,8 @@ function downloadPlan() {
 
 function resetSettings() {
   safeRemoveItem(accountStorageKey("settings"));
+  safeRemoveItem(accountStorageKey("planner"));
+  purchasedItems = new Map();
   applySettings(DEFAULTS);
   generatePlan({ shuffle: true });
 }
@@ -910,15 +1028,109 @@ function saveSettings(settings) {
   const safe = { ...settings };
   delete safe.excluded;
   delete safe.dailyTarget;
-  safeSetItem(accountStorageKey("settings"), JSON.stringify(safe));
+  return safeSetItem(accountStorageKey("settings"), JSON.stringify(safe));
 }
 
 function restoreSettings() {
-  const saved = parseJson(localStorage.getItem(accountStorageKey("settings")))
-    || parseJson(localStorage.getItem(STORAGE_KEYS.settings))
+  const saved = parseJson(safeGetItem(accountStorageKey("settings")))
+    || parseJson(safeGetItem(STORAGE_KEYS.settings))
     || DEFAULTS;
   applySettings({ ...DEFAULTS, ...saved });
   updateGoalLabel();
+}
+
+function savePlannerState() {
+  if (!state || !currentAccount) return false;
+  const record = {
+    schemaVersion: PLANNER_SCHEMA_VERSION,
+    savedAt: new Date().toISOString(),
+    settings: (() => {
+      const saved = { ...state.settings };
+      delete saved.excluded;
+      return saved;
+    })(),
+    plan: state.plan,
+    purchases: Object.fromEntries(purchasedItems),
+  };
+  return safeSetItem(accountStorageKey("planner"), JSON.stringify(record));
+}
+
+function restorePlannerState() {
+  const raw = safeGetItem(accountStorageKey("planner"));
+  if (!raw) return false;
+  const record = parseJson(raw);
+  if (!record || record.schemaVersion !== PLANNER_SCHEMA_VERSION || !record.settings || !record.plan) {
+    storageMessage = "Saved plan data was outdated or damaged, so PrepFit created a fresh plan.";
+    safeRemoveItem(accountStorageKey("planner"));
+    return false;
+  }
+
+  applySettings({ ...DEFAULTS, ...record.settings });
+  const settings = readSettings();
+  const plan = validatedStoredPlan(record.plan, settings);
+  if (!plan) {
+    storageMessage = "Saved plan data was unavailable or damaged, so PrepFit created a fresh plan.";
+    safeRemoveItem(accountStorageKey("planner"));
+    return false;
+  }
+
+  const groceries = aggregateGroceries(plan.days, settings.people, settings.powderProtein);
+  purchasedItems = reconcilePurchases(groceries, new Map(
+    record.purchases && typeof record.purchases === "object" ? Object.entries(record.purchases) : []
+  ));
+  const averages = averageMacros(plan.days);
+  const warning = buildWarning(plan, settings, averages);
+  state = { settings, plan, groceries, averages, warning };
+  lastGroceryText = groceryText(groceries);
+  renderCurrentState(warning || "Saved plan and shopping progress restored.");
+  return true;
+}
+
+function validatedStoredPlan(savedPlan, settings) {
+  if (!savedPlan || !Array.isArray(savedPlan.days) || !Array.isArray(savedPlan.missingTypes)) return null;
+  if (savedPlan.days.length !== 0 && savedPlan.days.length !== settings.days) return null;
+  try {
+    const days = savedPlan.days.map((savedDay, dayIndex) => {
+      if (!savedDay || !Array.isArray(savedDay.meals) || savedDay.meals.length !== MEAL_TYPES.length) {
+        throw new Error("Invalid stored day");
+      }
+      const meals = savedDay.meals.map((savedMeal, mealIndex) => {
+        const canonical = Object.values(RECIPES).flat().find((recipe) => recipe.name === savedMeal?.name);
+        if (!canonical || !recipeEligible(canonical, MEAL_TYPES[mealIndex], settings)) throw new Error("Unavailable stored meal");
+        const limits = portionLimits(settings);
+        const ratio = savedMeal.portionRatio;
+        if (!Number.isFinite(ratio) || ratio < limits.min || ratio > limits.max) {
+          throw new Error("Invalid stored portion");
+        }
+        if (!Array.isArray(savedMeal.ingredients) || savedMeal.ingredients.length !== canonical.ingredients.length) {
+          throw new Error("Invalid stored ingredients");
+        }
+        const meal = cloneRecipe(canonical);
+        meal.ingredients = savedMeal.ingredients.map((ingredient, ingredientIndex) => {
+          const expected = canonical.ingredients[ingredientIndex];
+          const expectedAmount = Number((expected.amount * ratio).toFixed(6));
+          if (!ingredient || ingredient.name !== expected.name || !Number.isFinite(ingredient.amount)
+            || ingredient.amount <= 0 || Math.abs(ingredient.amount - expectedAmount) > 0.000001) {
+            throw new Error("Invalid stored ingredient");
+          }
+          ingredientGrams(ingredient);
+          return { ...expected, amount: ingredient.amount };
+        });
+        meal.macros = macrosForMeal(meal.ingredients);
+        meal.portionRatio = ratio;
+        meal.label = MEAL_TYPES[mealIndex];
+        return meal;
+      });
+      return { day: dayIndex + 1, meals, macros: macrosForDay(meals, settings.powderProtein) };
+    });
+    return {
+      days,
+      missingTypes: savedPlan.missingTypes.filter((type) => MEAL_TYPES.includes(type)),
+      ...(typeof savedPlan.conflict === "string" ? { conflict: savedPlan.conflict } : {}),
+    };
+  } catch (error) {
+    return null;
+  }
 }
 
 function applySettings(settings) {
@@ -936,9 +1148,19 @@ function applySettings(settings) {
 }
 
 function updateGoalLabel(settings = readSettingsNoSave()) {
+  const days = integerInRange(dom.form.elements.days.value, DEFAULTS.days, 1, 7);
+  const bounds = proteinInputBounds(settings.goalMode, days);
+  const input = dom.form.elements.proteinGoal;
   dom.goalLabel.textContent = settings.goalMode === "weekly"
     ? "Protein per person per week"
     : "Protein per person per day";
+  input.min = bounds.min;
+  input.max = bounds.max;
+  input.step = settings.goalMode === "weekly" ? days * 5 : 5;
+  const help = document.querySelector("#protein-help");
+  if (help) help.textContent = settings.goalMode === "weekly"
+    ? `Allowed range: ${bounds.min}–${bounds.max}g/week for ${days} days (40–320g/day).`
+    : "Allowed range: 40–320g/day.";
 }
 
 function toggleTheme() {
@@ -966,157 +1188,52 @@ function loadTheme() {
   return hour >= 6 && hour < 18 ? "morning" : "evening";
 }
 
-function buildWarning(plan, settings) {
+function buildWarning(plan, settings, averages = averageMacros(plan.days)) {
   const warnings = [];
-  if (plan.relaxed) warnings.push("Some avoided ingredients were relaxed because the filters were too strict.");
-  if (plan.unavailable) warnings.push("A fallback recipe was used because there were not enough matches.");
-  if (settings.dailyTarget - settings.powderProtein > 230) warnings.push("Protein target is very high, so portions may be larger than a typical prep meal.");
+  if (plan.conflict) return plan.conflict;
+  if (plan.missingTypes?.length) {
+    return `No matching ${listWords(plan.missingTypes.map((type) => type.toLowerCase()))} recipes for your protein choice, cuisine, and avoided ingredients. Change your filters to create a complete plan. Restrictions have not been relaxed.`;
+  }
+  const limits = portionLimits(settings);
+  const outside = targetResults(averages, settings).filter((result) => result.kind !== "near");
+  if (settings.powderProtein > settings.dailyTarget) {
+    warnings.push("Supplemental whey alone exceeds the protein target; food portions stay at the minimum.");
+  }
+  if (outside.length) {
+    const details = outside.map((result) =>
+      `${nutritionTargetLabel(result.nutrient).toLowerCase()} is ${formatTargetDelta(result)}`).join(", ");
+    warnings.push(`Closest plan within ${limits.min}×–${limits.max}× portion limits: ${details}.`);
+  }
   return warnings.join(" ");
 }
 
-function targetStatus(delta, target) {
-  const tolerance = Math.max(8, target * 0.08);
-  if (Math.abs(delta) <= tolerance) return { kind: "near", label: "Near target", short: "Near" };
-  if (delta < 0) return { kind: "under", label: "Under target", short: `${Math.abs(Math.round(delta))}g under` };
-  return { kind: "over", label: "Over target", short: `${Math.round(delta)}g over` };
+function nutritionTargetLabel(nutrient) {
+  return { protein: "Protein", calories: "Calories", carbs: "Carbs", fat: "Fat" }[nutrient];
+}
+
+function formatTargetDelta(result) {
+  if (result.kind === "near") return `${Math.abs(Math.round(result.delta))}${result.unit} from target`;
+  return `${Math.abs(Math.round(result.delta))}${result.unit} ${result.kind}`;
 }
 
 function formatIngredient(ingredient, multiplier) {
-  const amount = roundAmount(ingredient.amount * multiplier);
-  const unit = displayUnit(normalizeUnit(ingredient.unit), amount);
-  return `${formatAmount(amount)} ${unit} ${ingredient.name}`;
+  const amount = ingredient.amount * multiplier;
+  const grams = ingredientGrams({ ...ingredient, amount });
+  const unit = nutritionUnit(ingredient.unit);
+  const quantity = `${formatAmount(amount)} ${displayUnit(unit, amount)}`;
+  const weight = unit === "g" ? "" : `; ${formatAmount(grams)} g`;
+  const purpose = ingredient.componentOf ? `; for ${ingredient.componentOf}` : "";
+  return `${quantity} ${ingredient.name} (${NUTRITION[ingredient.name].preparation}${weight}${purpose})`;
 }
 
 function marketHint(ingredient) {
-  const name = ingredient.name;
-  const unit = normalizeUnit(ingredient.unit);
-  const amount = ingredient.amount;
-  const lower = name.toLowerCase();
-
-  if (unit === "oz") {
-    const pounds = amount / 16;
-    if (pounds >= 0.75) {
-      return `${formatAmount(roundUpTo(pounds, 0.25))} lb`;
-    }
-    return `${Math.ceil(amount)} oz`;
+  const reference = NUTRITION[ingredient.name];
+  if (reference.preparation.startsWith("cooked")) {
+    return "Cook enough to yield this cooked weight, or buy ready-cooked. Raw/dry purchase weight depends on cooking yield.";
   }
-
-  if (unit === "can") {
-    return `${Math.ceil(amount)} ${plural("can", Math.ceil(amount))}`;
-  }
-
-  if (unit === "count") {
-    return countMarketHint(lower, amount);
-  }
-
-  if (unit === "cup") {
-    return cupMarketHint(lower, amount);
-  }
-
-  if (unit === "tbsp" || unit === "tsp") {
-    return pantryMarketHint(lower, amount, unit);
-  }
-
-  if (unit === "slice") {
-    return `1 loaf/pack`;
-  }
-
-  if (unit === "scoop") {
-    return `${formatAmount(amount)} ${displayUnit(unit, amount)}`;
-  }
-
-  return formatIngredient(ingredient, 1);
-}
-
-function countMarketHint(name, amount) {
-  const count = Math.ceil(amount);
-  if (name.includes("egg")) return `${roundUpToDozen(count)} eggs`;
-  if (name.includes("avocado")) return `${count} ${plural("avocado", count)}`;
-  if (name.includes("lemon")) return `${count} ${plural("lemon", count)}`;
-  if (name.includes("naan") || name.includes("pita")) return "1 pack";
-  if (name.includes("sweet potato")) return `${count} medium sweet ${plural("potato", count)}`;
-  if (name.includes("onion")) return `${count} medium ${plural("onion", count)}`;
-  return `${count} ${plural("piece", count)}`;
-}
-
-function cupMarketHint(name, amount) {
-  if (["rice", "brown rice", "basmati rice", "quinoa", "farro", "couscous", "lentils"].includes(name)) {
-    const dryCups = amount / 3;
-    return `${formatAmount(roundUpTo(dryCups, 0.25))} dry cups / 1 lb bag`;
-  }
-
-  if (name.includes("beans") || name.includes("chickpeas")) {
-    const cans = Math.max(1, Math.ceil(amount / 1.5));
-    return `${cans} ${plural("can", cans)} / ${formatAmount(roundUpTo(amount / 3, 0.25))} dry cups`;
-  }
-
-  if (name.includes("egg whites")) {
-    const cartons = Math.max(1, Math.ceil(amount / 2));
-    return `${cartons} 16 oz ${plural("carton", cartons)}`;
-  }
-
-  if (name.includes("greek yogurt") || name.includes("cottage cheese")) {
-    const ounces = amount * 8;
-    return `${Math.ceil(ounces)} oz tub`;
-  }
-
-  if (name.includes("shredded cheese") || name.includes("mozzarella") || name.includes("parmesan")) {
-    const ounces = amount * 4;
-    return `${Math.max(4, Math.ceil(ounces))} oz package`;
-  }
-
-  if (name.includes("spinach") || name.includes("romaine") || name.includes("slaw")) {
-    const bags = Math.max(1, Math.ceil(amount / 4));
-    return `${bags} ${plural("bag", bags)} / clamshell`;
-  }
-
-  if (name.includes("broccoli") || name.includes("green beans") || name.includes("asparagus") || name.includes("snap peas")) {
-    const pounds = amount / 3;
-    return `${formatAmount(roundUpTo(pounds, 0.25))} lb`;
-  }
-
-  if (name.includes("bell peppers")) {
-    const peppers = Math.max(1, Math.ceil(amount / 1.5));
-    return `${peppers} ${plural("bell pepper", peppers)}`;
-  }
-
-  if (name.includes("zucchini")) {
-    const zucchini = Math.max(1, Math.ceil(amount / 1.5));
-    return `${zucchini} medium ${plural("zucchini", zucchini)}`;
-  }
-
-  if (name.includes("corn") || name.includes("peas") || name.includes("edamame") || name.includes("cauliflower rice") || name.includes("vegetables")) {
-    const bags = Math.max(1, Math.ceil(amount / 3));
-    return `${bags} frozen ${plural("bag", bags)}`;
-  }
-
-  if (name.includes("salsa") || name.includes("sauce") || name.includes("tomatoes")) {
-    const jars = Math.max(1, Math.ceil(amount / 2));
-    return `${jars} jar/can`;
-  }
-
-  if (name.includes("hummus") || name.includes("tzatziki")) {
-    return "1 small tub";
-  }
-
-  if (name.includes("blueberries")) {
-    const pints = Math.max(1, Math.ceil(amount / 2));
-    return `${pints} ${plural("pint", pints)}`;
-  }
-
-  return `${formatAmount(amount)} ${displayUnit("cup", amount)}`;
-}
-
-function pantryMarketHint(name, amount, unit) {
-  if (name.includes("oil") || name.includes("soy sauce") || name.includes("seasoning") || name.includes("spices")) {
-    return `${formatAmount(amount)} ${displayUnit(unit, amount)} pantry`;
-  }
-
-  if (name.includes("peanut butter") || name.includes("hummus") || name.includes("sauce")) {
-    return `1 jar/tub`;
-  }
-
-  return `${formatAmount(amount)} ${displayUnit(unit, amount)}`;
+  if (ingredient.name === "canned tuna") return "Required drained weight. Compare the drained grams on your can; can sizes vary.";
+  if (ingredient.name === "protein pasta") return "Buy this dry weight; nutrition uses Barilla Protein+ Penne.";
+  return reference.note || "Use the preparation state shown; compare packaged products with the reference nutrition.";
 }
 
 function roundUpTo(value, step) {
@@ -1129,9 +1246,8 @@ function roundUpToDozen(count) {
 }
 
 function formatAmount(value) {
-  if (Number.isInteger(value)) return String(value);
-  if (value < 1) return value.toFixed(2).replace(/0$/, "");
-  return value.toFixed(1).replace(/\.0$/, "");
+  if (value > 0 && value < 0.01) return "<0.01";
+  return Number(value.toFixed(2)).toString();
 }
 
 function normalizeUnit(unit) {
@@ -1234,16 +1350,32 @@ function parseJson(value) {
 function safeSetItem(key, value) {
   try {
     localStorage.setItem(key, value);
+    return true;
   } catch (error) {
     console.warn(`PrepFit: could not save "${key}" locally.`, error);
+    storageMessage = "Browser storage is unavailable. Your latest changes will be lost when this page closes.";
+    return false;
   }
 }
 
 function safeRemoveItem(key) {
   try {
     localStorage.removeItem(key);
+    return true;
   } catch (error) {
     console.warn(`PrepFit: could not clear "${key}" locally.`, error);
+    storageMessage = "Browser storage is unavailable, so saved data could not be cleared.";
+    return false;
+  }
+}
+
+function safeGetItem(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch (error) {
+    console.warn(`PrepFit: could not read "${key}" locally.`, error);
+    storageMessage = "Browser storage is unavailable. PrepFit could not restore saved data.";
+    return null;
   }
 }
 
