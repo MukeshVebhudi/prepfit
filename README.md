@@ -226,7 +226,7 @@ a static site and avoid adding a framework unless a later measured need justifie
 
 ### 1. Split the application into focused JavaScript modules
 
-Completed September 9, 2026. `app.js` was reduced from 1,420 to 715 lines and now coordinates
+Completed September 9, 2026. `app.js` was reduced from 1,420 to 714 lines and now coordinates
 initialization, DOM events, form state, and session transitions. Focused modules own utilities,
 guarded storage, profile data and migration, plan persistence and validation, meal planning,
 groceries, rendering, and export. They use explicit ES-module imports and small dependency-injected
