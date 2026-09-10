@@ -1,5 +1,26 @@
 const { test, expect } = require("@playwright/test");
 
+test("number settings allow normal replacement typing", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Continue as guest" }).click();
+
+  const people = page.locator("#people");
+  await people.press("ControlOrMeta+A");
+  await people.press("Backspace");
+  await people.pressSequentially("4");
+  await expect(people).toHaveValue("4");
+
+  const days = page.locator("#days");
+  await days.press("ControlOrMeta+A");
+  await days.press("Backspace");
+  await days.pressSequentially("6");
+  await expect(days).toHaveValue("6");
+  await days.blur();
+
+  await expect(page.locator("#summary-stats")).toContainText("4");
+  await expect(page.locator("#summary-stats")).toContainText("6 days");
+});
+
 test("complete planning journey persists and works offline", async ({ page, context }, testInfo) => {
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
