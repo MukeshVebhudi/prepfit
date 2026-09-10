@@ -196,18 +196,18 @@ every push and pull request. The production app still has no npm package or buil
 
 ## Release readiness
 
-**Readiness rating: 8.5/10 — ready for a public web beta after deployment verification.**
+**Codebase rating: 9.2/10. Web release readiness: 9.5/10 — deployed and verified for public beta.**
 
-The September 9, 2026 release suite passes locally. It covers all original repair areas: mandatory
+The September 10, 2026 release suite passes locally and in GitHub Actions. It covers all original repair areas: mandatory
 dietary filtering, unit-aware nutrition, multi-target planning, exact persistence, local-profile
 migration, scoped offline caching, accessibility structure, food-safety copy, and the Java server.
-A headless Chromium journey also passed guest entry, vegetarian and ingredient exclusions,
+A headless Chromium journey also passes guest entry, vegetarian and ingredient exclusions,
 generation, swap, favorite, grocery checkoff, reload, guest conversion, offline revisit, text
-download, and a multi-page PDF.
+download, and print. The deployed PWA at `https://mukeshvebhudi.github.io/prepfit/` passes its live
+HTTPS subdirectory, manifest, service-worker scope, storage persistence, and offline-launch test.
 
 Before calling the Android wrapper or nutrition experience production-ready:
 
-- Deploy to the intended HTTPS URL and confirm the newly added GitHub Actions workflow passes there.
 - Test installation and an offline launch on a physical Android device.
 - Replace the Digital Asset Links signing fingerprint placeholder before building a Trusted Web
   Activity.
@@ -244,7 +244,7 @@ a static site and avoid adding a framework unless a later measured need justifie
 - [x] 4. Improve nutrition feedback and customization
 - [x] 5. Make groceries more practical
 - [x] 6. Add direct plan editing and better recovery controls
-- [ ] 7. Add code-quality gates and prepare a verified deployment
+- [x] 7. Add code-quality gates and prepare a verified deployment
 
 ### 1. Split the application into focused JavaScript modules
 
@@ -472,6 +472,20 @@ the controls on desktop, mobile, keyboard, and print before completing the step.
 ```
 
 ### 7. Add code-quality gates and prepare a verified deployment
+
+Completed September 10, 2026. ESLint `10.10.0`, Prettier `3.9.6`, and c8 `12.0.0` are pinned with a
+zero-vulnerability npm audit. The release command runs formatting, correctness-focused lint rules,
+static-reference validation, the complete regression suite, and mapped plan-math coverage without
+an arbitrary threshold. Current plan-math coverage is 94.54% statements, 85.45% branches, 89.47%
+functions, and 94.54% lines. GitHub Actions uses the current Node-based action versions, publishes a
+seven-day coverage artifact, and runs Chromium only after the faster quality job passes.
+
+Pull request #2 deployed the verified application from `main` to
+`https://mukeshvebhudi.github.io/prepfit/`. GitHub Pages build `34446561101` passed, and the live
+Playwright check passed the `/prepfit/` URL boundary, relative manifest identity/start/scope,
+scoped service-worker controller, saved-setting reload, and offline relaunch. Remaining Android work
+requires the owner to create and protect a signing key, replace the Digital Asset Links fingerprint,
+test installation on a physical device, and publish through Play Console.
 
 Add lightweight formatting, linting, coverage reporting, and static-document validation. Then deploy
 the PWA to its intended HTTPS subdirectory and verify the live installation boundary. Android signing
