@@ -36,7 +36,8 @@ export function createRenderer({ dom, cuisines, categories, proteins, categoryBy
     if (meal.removed) return `<article class="meal-card removed-meal"><p class="meal-kicker">${escapeHtml(meal.label)}</p><h3>Meal removed</h3><p class="auth-hint">Restore ${escapeHtml(meal.name)} to add its nutrition and groceries back.</p><div class="meal-actions"><button class="icon-button" type="button" data-action="restore" data-day="${dayIndex}" data-meal="${mealIndex}">Restore meal</button></div></article>`;
     const source = proteins[meal.proteinType]?.source || "mixed protein";
     return `<article class="meal-card"><div class="meal-top"><div class="meal-icon" aria-hidden="true">${meal.label.charAt(0)}</div><div>
-      <p class="meal-kicker">${escapeHtml(meal.label)} · ${escapeHtml(cuisines[meal.cuisine] || "Classic")}</p><h3>${escapeHtml(meal.name)}</h3><small>${escapeHtml(source)}</small></div></div>
+      <p class="meal-kicker">${escapeHtml(meal.label)} · ${escapeHtml(cuisines[meal.cuisine] || "Classic")}</p><h3>${escapeHtml(meal.name)}</h3><small>${escapeHtml(source)}</small></div>
+      <button class="icon-button meal-quick-action" type="button" data-action="swap" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Swap ${escapeAttr(meal.label)} ${escapeAttr(meal.name)}">Swap dish</button></div>
       <p class="auth-hint">Estimated nutrition per serving; ingredient quantities below cover all listed servings.</p>
       <div class="badge-row" aria-label="Meal macros"><span class="badge protein">${Math.round(meal.macros.protein)}g protein</span><span class="badge calories">${Math.round(meal.macros.calories)} kcal</span><span class="badge carb">${Math.round(meal.macros.carbs)}g carbs</span><span class="badge fat">${Math.round(meal.macros.fat)}g fat</span></div>
       <div class="meal-section"><p class="meal-kicker">Ingredients for ${servings} ${servingLabel}</p><ul>${meal.ingredients.map((item) => `<li>${escapeHtml(formatIngredient(item, servings))}</li>`).join("")}</ul></div>
@@ -45,7 +46,6 @@ export function createRenderer({ dom, cuisines, categories, proteins, categoryBy
       <button class="icon-button" type="button" data-action="portion-down" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Decrease ${escapeAttr(meal.name)} portion">− Portion</button>
       <span class="portion-value" aria-label="Current portion">${Math.round((meal.portionRatio || 1) * 100)}%</span>
       <button class="icon-button" type="button" data-action="portion-up" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Increase ${escapeAttr(meal.name)} portion">+ Portion</button>
-      <button class="icon-button" type="button" data-action="swap" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Swap ${escapeAttr(meal.label)} ${escapeAttr(meal.name)}">Swap</button>
       <button class="icon-button danger-button" type="button" data-action="remove" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Remove ${escapeAttr(meal.label)} ${escapeAttr(meal.name)}">Remove</button></div></article>`;
   }
 
