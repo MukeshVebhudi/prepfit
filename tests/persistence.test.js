@@ -73,6 +73,25 @@ assert.equal(reconcilePurchases(groceries, purchasedItems).size, 1);
 const changedGroceries = groceries.map((item, index) => index ? item : { ...item, amount: item.amount + 1 });
 assert.equal(reconcilePurchases(changedGroceries, purchasedItems).size, 0);
 
+const beforeEditPlan = JSON.stringify(state.plan);
+const beforeEditPurchases = [...purchasedItems];
+const beforeEditRatio = state.plan.days[0].meals[0].portionRatio;
+editMeal(0, 0, 'portion-up');
+assert.ok(state.plan.days[0].meals[0].portionRatio > beforeEditRatio);
+assert.notEqual(JSON.stringify(state.plan), beforeEditPlan);
+undoMealEdit();
+assert.equal(JSON.stringify(state.plan), beforeEditPlan);
+assert.deepEqual([...purchasedItems], beforeEditPurchases);
+
+editMeal(0, 0, 'remove');
+assert.equal(state.plan.days[0].meals[0].removed, true);
+assert.equal(JSON.parse(localStorage.getItem(accountStorageKey('planner'))).plan.days[0].meals[0].removed, true);
+const removedPlan = validatedStoredPlan(state.plan, settings);
+assert.equal(removedPlan.days[0].meals[0].removed, true);
+assert.ok(removedPlan.days[0].macros.protein < JSON.parse(beforeEditPlan).days[0].macros.protein);
+editMeal(0, 0, 'restore');
+assert.equal(state.plan.days[0].meals[0].removed, false);
+
 assert.equal(validatedStoredPlan({ days: [{}], missingTypes: [] }, settings), null);
 const damaged = JSON.parse(savedRaw);
 damaged.plan.days[0].meals[0].ingredients[0].amount = -4;

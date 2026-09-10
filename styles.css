@@ -989,7 +989,13 @@ body[data-theme="evening"] .meal-icon {
 
 .meal-actions {
   justify-content: flex-start;
+  align-items: center;
 }
+
+.plan-heading-actions { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.portion-value { min-width: 3rem; text-align: center; color: var(--muted); font-size: 0.8rem; font-weight: 800; }
+.removed-meal { min-height: 12rem; align-content: center; border-style: dashed; }
+.danger-button { color: var(--danger); }
 
 .icon-button {
   min-height: 2.25rem;
@@ -1330,6 +1336,7 @@ body[data-theme="evening"] .meal-icon {
   .auth-view,
   .planner-rail,
   .meal-actions,
+  .plan-heading-actions button,
   .ghost-button,
   .skip-link,
   .favorites-panel,

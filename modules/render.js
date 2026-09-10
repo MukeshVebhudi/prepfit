@@ -17,7 +17,8 @@ export function createRenderer({ dom, cuisines, categories, proteins, categoryBy
       ? { kind: outside.some((result) => result.kind === "under") ? "under" : "over", label: `${outside.length} ${plural("target", outside.length)} outside range` }
       : { kind: "near", label: "All targets near" };
     dom.summaryTitle.textContent = `${settings.days}-day ${settings.mealMode} plan`;
-    dom.summaryText.textContent = warning || `${status.label}. ${settings.people} ${plural("person", settings.people)} with ${settings.days * settings.people * 3} planned meals.`;
+    const activeMealCount = plan.days.reduce((count, day) => count + day.meals.filter((meal) => !meal.removed).length * settings.people, 0);
+    dom.summaryText.textContent = warning || `${status.label}. ${settings.people} ${plural("person", settings.people)} with ${activeMealCount} planned meals.`;
     dom.planStatus.textContent = status.label; dom.planStatus.dataset.status = status.kind;
     const stats = [
       ["Duration", `${settings.days} ${plural("day", settings.days)}`], ["People", settings.people],
@@ -25,13 +26,14 @@ export function createRenderer({ dom, cuisines, categories, proteins, categoryBy
       ["Supplement", settings.powderProtein ? `${settings.supplementMode === "custom" ? settings.supplementLabel : "Whey protein powder"}: ${settings.powderProtein}g protein/day` : "Disabled"], ["Cuisine", settings.cuisine === "random" ? "Mixed" : cuisines[settings.cuisine]],
       ["Budget", budgetLabel(settings.budget)], ["Avg calories", Math.round(averages.calories)],
       ["Avg carbs", `${Math.round(averages.carbs)}g`], ["Avg fat", `${Math.round(averages.fat)}g`],
-      ["Total meals", settings.days * settings.people * 3], ["Target status", outside.length ? `${outside.length} outside tolerance` : "Within tolerance"],
+      ["Total meals", activeMealCount], ["Target status", outside.length ? `${outside.length} outside tolerance` : "Within tolerance"],
     ];
     dom.summaryStats.innerHTML = stats.map(([label, value]) => `<div class="stat"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
   }
 
   function renderMeal(meal, dayIndex, mealIndex, servings, servingLabel = servings === 1 ? "person" : "people") {
     const favorites = getFavorites();
+    if (meal.removed) return `<article class="meal-card removed-meal"><p class="meal-kicker">${escapeHtml(meal.label)}</p><h3>Meal removed</h3><p class="auth-hint">Restore ${escapeHtml(meal.name)} to add its nutrition and groceries back.</p><div class="meal-actions"><button class="icon-button" type="button" data-action="restore" data-day="${dayIndex}" data-meal="${mealIndex}">Restore meal</button></div></article>`;
     const source = proteins[meal.proteinType]?.source || "mixed protein";
     return `<article class="meal-card"><div class="meal-top"><div class="meal-icon" aria-hidden="true">${meal.label.charAt(0)}</div><div>
       <p class="meal-kicker">${escapeHtml(meal.label)} · ${escapeHtml(cuisines[meal.cuisine] || "Classic")}</p><h3>${escapeHtml(meal.name)}</h3><small>${escapeHtml(source)}</small></div></div>
@@ -40,7 +42,11 @@ export function createRenderer({ dom, cuisines, categories, proteins, categoryBy
       <div class="meal-section"><p class="meal-kicker">Ingredients for ${servings} ${servingLabel}</p><ul>${meal.ingredients.map((item) => `<li>${escapeHtml(formatIngredient(item, servings))}</li>`).join("")}</ul></div>
       <div class="meal-section"><p class="meal-kicker">Prep</p><ol>${meal.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ol></div>
       <div class="meal-actions"><button class="icon-button" type="button" data-action="favorite" data-name="${escapeAttr(meal.name)}" aria-label="${favorites.has(meal.name) ? "Remove" : "Save"} ${escapeAttr(meal.name)} ${favorites.has(meal.name) ? "from" : "to"} favorites" aria-pressed="${favorites.has(meal.name)}">${favorites.has(meal.name) ? "Saved" : "Save"}</button>
-      <button class="icon-button" type="button" data-action="swap" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Swap ${escapeAttr(meal.label)} ${escapeAttr(meal.name)}">Swap</button></div></article>`;
+      <button class="icon-button" type="button" data-action="portion-down" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Decrease ${escapeAttr(meal.name)} portion">− Portion</button>
+      <span class="portion-value" aria-label="Current portion">${Math.round((meal.portionRatio || 1) * 100)}%</span>
+      <button class="icon-button" type="button" data-action="portion-up" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Increase ${escapeAttr(meal.name)} portion">+ Portion</button>
+      <button class="icon-button" type="button" data-action="swap" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Swap ${escapeAttr(meal.label)} ${escapeAttr(meal.name)}">Swap</button>
+      <button class="icon-button danger-button" type="button" data-action="remove" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Remove ${escapeAttr(meal.label)} ${escapeAttr(meal.name)}">Remove</button></div></article>`;
   }
 
   function renderMeals(plan, settings) {
@@ -65,7 +71,7 @@ export function createRenderer({ dom, cuisines, categories, proteins, categoryBy
 
   function renderPrepSchedule(plan, settings) {
     if (!plan.days.length) { dom.prepSchedule.innerHTML = `<p class="empty-state">A prep schedule will appear when a complete plan matches your choices.</p>`; return; }
-    const seen = new Set(); const meals = plan.days.flatMap((day) => day.meals).filter((meal) => !seen.has(meal.name) && seen.add(meal.name));
+    const seen = new Set(); const meals = plan.days.flatMap((day) => day.meals).filter((meal) => !meal.removed && !seen.has(meal.name) && seen.add(meal.name));
     const ingredients = new Set(meals.flatMap((meal) => meal.ingredients.map((item) => item.name)));
     const hasSauces = [...ingredients].some((name) => /sauce|salsa|hummus|tzatziki|oil|yogurt/i.test(name));
     const hasGrains = [...ingredients].some((name) => categoryByIngredient[name] === "Grains");

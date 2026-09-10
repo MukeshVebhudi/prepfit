@@ -98,7 +98,7 @@ export function createGroceryTools({
     }
     const settings = typeof supplement === "number" ? { powderProtein: supplement } : (supplement || {});
     days.forEach((day) => {
-      day.meals.forEach((meal) => meal.ingredients.forEach(add));
+      day.meals.filter((meal) => !meal.removed).forEach((meal) => meal.ingredients.forEach(add));
       if (settings.powderProtein) {
         if (settings.supplementMode === "custom") addCustomSupplement(settings);
         else add(supplementalPowderIngredient(settings.powderProtein));

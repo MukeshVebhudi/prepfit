@@ -65,6 +65,7 @@ const dom = {
   summaryText: document.querySelector("#summary-text"),
   summaryStats: document.querySelector("#summary-stats"),
   planStatus: document.querySelector("#plan-status"),
+  undoPlanEdit: document.querySelector("#undo-plan-edit"),
   themeToggle: document.querySelector("#theme-toggle"),
   randomize: document.querySelector("#randomize"),
   printPlan: document.querySelector("#print-plan"),
@@ -99,6 +100,7 @@ let purchasedItems = new Map();
 let pantryItems = new Set();
 let manualGroceries = [];
 let editingManualId = null;
+let mealEditSnapshot = null;
 let storageMessage = "";
 
 const browserStorage = globalThis.localStorage || {
@@ -228,6 +230,7 @@ function bindEvents() {
   });
 
   dom.mealPlan.addEventListener("click", handleMealAction);
+  dom.undoPlanEdit.addEventListener("click", undoMealEdit);
   dom.groceryList.addEventListener("change", handleGroceryChange);
   dom.groceryList.addEventListener("click", handleGroceryAction);
   dom.manualGroceryForm.addEventListener("submit", handleManualGrocerySubmit);
@@ -331,6 +334,7 @@ function handleSavedProfileClick(event) {
 
 function signIn(account) {
   currentAccount = account;
+  mealEditSnapshot = null;
   safeSetItem(STORAGE_KEYS.currentAccount, account.id);
   document.body.classList.add("is-authenticated");
   dom.accountName.textContent = account.name;
@@ -353,6 +357,7 @@ function logoutAccount() {
   pantryItems = new Set();
   manualGroceries = [];
   editingManualId = null;
+  mealEditSnapshot = null;
   storageMessage = "";
   safeRemoveItem(STORAGE_KEYS.currentAccount);
   document.body.classList.remove("is-authenticated");
@@ -447,6 +452,7 @@ function generatePlan(options = {}) {
   }
 
   const settings = readSettings();
+  mealEditSnapshot = null;
   const settingsSaved = saveSettings(settings);
   updateGoalLabel(settings);
 
@@ -487,6 +493,7 @@ function renderCurrentState(note = "") {
   dom.printPlan.disabled = !state.plan.days.length;
   dom.downloadPlan.disabled = !state.plan.days.length;
   dom.copyGroceries.disabled = !state.groceries.length;
+  dom.undoPlanEdit.hidden = !mealEditSnapshot;
 }
 
 function readSettings() {
@@ -543,38 +550,88 @@ function swapMeal(dayIndex, mealIndex) {
     dom.plannerNote.textContent = `No alternative ${type.toLowerCase()} matches your dietary restrictions and cuisine. Your current meal is unchanged. Change your filters to see more options.`;
     return;
   }
-  const baseMeals = currentDay.meals.map(normalizeMealPortion);
   let bestSwap = null;
   candidates.forEach((candidate) => {
-    const proposed = baseMeals.map((meal, index) => index === mealIndex ? cloneRecipe(candidate) : cloneRecipe(meal));
-    const meals = scaleMealsToTargets(proposed, settings);
-    const score = targetFitScore(macrosForDay(meals, settings), settings)
+    const replacement = scaleMeal(cloneRecipe(candidate), currentMeal.portionRatio || 1);
+    replacement.label = type;
+    const proposed = currentDay.meals.map((meal, index) => index === mealIndex ? replacement : meal);
+    const score = targetFitScore(macrosForDay(proposed.filter((meal) => !meal.removed), settings), settings)
       + recipeScore(candidate, type, settings, usedNames, Math.random(), mealIndex) / 100;
-    if (!bestSwap || score < bestSwap.score) bestSwap = { score, meals };
+    if (!bestSwap || score < bestSwap.score) bestSwap = { score, replacement };
   });
-  bestSwap.meals.forEach((meal, index) => { meal.label = MEAL_TYPES[index]; });
-
+  captureMealEdit();
   if (settings.mealMode === "batch") {
     state.plan.days.forEach((day) => {
-      day.meals = bestSwap.meals.map(cloneRecipe);
-      day.macros = macrosForDay(day.meals, settings);
+      day.meals[mealIndex] = cloneRecipe(bestSwap.replacement);
     });
   } else {
-    currentDay.meals = bestSwap.meals;
-    currentDay.macros = macrosForDay(currentDay.meals, settings);
+    currentDay.meals[mealIndex] = bestSwap.replacement;
   }
+  recomputeEditedPlan("Meal swapped and saved. Dietary restrictions preserved.");
+}
 
-  state.groceries = combineGroceries(aggregateGroceries(state.plan.days, settings.people, settings), manualGroceries);
+function captureMealEdit() {
+  mealEditSnapshot = {
+    plan: JSON.parse(JSON.stringify(state.plan)),
+    purchases: [...purchasedItems],
+    pantry: [...pantryItems],
+  };
+}
+
+function editMeal(dayIndex, mealIndex, action) {
+  if (!state) return;
+  const meal = state.plan.days[dayIndex]?.meals[mealIndex];
+  if (!meal) return;
+  captureMealEdit();
+  const affected = state.settings.mealMode === "batch"
+    ? state.plan.days.map((day) => day.meals[mealIndex])
+    : [meal];
+  if (action === "remove" || action === "restore") {
+    affected.forEach((item) => { item.removed = action === "remove"; });
+    recomputeEditedPlan(action === "remove" ? "Meal removed. Use Undo or Restore meal to recover it." : "Meal restored.");
+    return;
+  }
+  const limits = portionLimits(state.settings);
+  const direction = action === "portion-up" ? 0.05 : -0.05;
+  const nextRatio = clamp(Math.round(((meal.portionRatio || 1) + direction) * 20) / 20, limits.min, limits.max);
+  if (Math.abs(nextRatio - (meal.portionRatio || 1)) < 0.001) {
+    mealEditSnapshot = null;
+    renderCurrentState(`Portions are limited to ${Math.round(limits.min * 100)}%–${Math.round(limits.max * 100)}% for this budget mode.`);
+    return;
+  }
+  affected.forEach((item, index) => {
+    const adjusted = scaleMeal(normalizeMealPortion(item), nextRatio);
+    adjusted.label = item.label;
+    adjusted.removed = item.removed;
+    if (state.settings.mealMode === "batch") state.plan.days[index].meals[mealIndex] = adjusted;
+    else state.plan.days[dayIndex].meals[mealIndex] = adjusted;
+  });
+  recomputeEditedPlan(`Portion adjusted to ${Math.round(nextRatio * 100)}% and saved.`);
+}
+
+function recomputeEditedPlan(message) {
+  state.plan.days.forEach((day) => {
+    day.macros = macrosForDay(day.meals.filter((meal) => !meal.removed), state.settings);
+  });
+  state.groceries = combineGroceries(aggregateGroceries(state.plan.days, state.settings.people, state.settings), manualGroceries);
   purchasedItems = reconcilePurchases(state.groceries, purchasedItems);
-  const validGroceryKeys = new Set(state.groceries.map(groceryItemKey));
-  pantryItems = new Set([...pantryItems].filter((key) => validGroceryKeys.has(key)));
+  const validKeys = new Set(state.groceries.map(groceryItemKey));
+  pantryItems = new Set([...pantryItems].filter((key) => validKeys.has(key)));
   state.averages = averageMacros(state.plan.days);
+  state.warning = buildWarning(state.plan, state.settings, state.averages);
   lastGroceryText = groceryText(state.groceries, purchasedItems, pantryItems);
-  state.warning = buildWarning(state.plan, settings, state.averages);
   const saved = savePlannerState();
-  renderCurrentState(state.warning || (saved
-    ? "Meal swapped and saved. Dietary restrictions preserved."
-    : "Meal swapped, but browser storage could not save it."));
+  renderCurrentState(saved ? message : `${message} Browser storage could not save it.`);
+}
+
+function undoMealEdit() {
+  if (!state || !mealEditSnapshot) return;
+  const snapshot = mealEditSnapshot;
+  mealEditSnapshot = null;
+  state.plan = snapshot.plan;
+  purchasedItems = new Map(snapshot.purchases);
+  pantryItems = new Set(snapshot.pantry);
+  recomputeEditedPlan("Last meal edit undone.");
 }
 
 function handleGroceryChange(event) {
@@ -691,6 +748,10 @@ function handleMealAction(event) {
 
   if (button.dataset.action === "swap") {
     swapMeal(Number(button.dataset.day), Number(button.dataset.meal));
+    return;
+  }
+  if (["remove", "restore", "portion-up", "portion-down"].includes(button.dataset.action)) {
+    editMeal(Number(button.dataset.day), Number(button.dataset.meal), button.dataset.action);
   }
 }
 
@@ -710,6 +771,7 @@ function resetSettings() {
   pantryItems = new Set();
   manualGroceries = [];
   editingManualId = null;
+  mealEditSnapshot = null;
   applySettings(DEFAULTS);
   generatePlan({ shuffle: true });
 }

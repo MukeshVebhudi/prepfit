@@ -17,6 +17,7 @@ assert.doesNotMatch(html, /summary-card panel"[^>]+aria-live/);
 assert.match(html, /Customize supplement nutrition/);
 assert.match(html, /name="supplementMode"/);
 assert.match(html, /name="supplementAllergens"/);
+assert.match(html, /id="undo-plan-edit"[^>]+hidden/);
 
 assert.match(css, /--focus:\s*#[0-9a-f]{6}/i);
 assert.match(css, /\.jump-link:not\(\[hidden\]\)[\s\S]*position:\s*sticky/);
@@ -24,6 +25,7 @@ assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
 assert.match(css, /@media print[\s\S]*font-size:\s*11pt/);
 assert.match(css, /\.day-card \+ \.day-card[\s\S]*break-before:\s*page/);
 assert.match(css, /\.grocery-category input[\s\S]*display:\s*inline-block/);
+assert.match(css, /@media print[\s\S]*\.meal-actions[\s\S]*display:\s*none !important/);
 
 const generatedMeals = [...RECIPES.lunch, ...RECIPES.dinner];
 assert.ok(generatedMeals.every((meal) => meal.steps.some((step) => /within 2 hours/.test(step))));

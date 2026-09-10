@@ -50,6 +50,23 @@ test("complete planning journey persists and works offline", async ({ page, cont
   await expect(cards.first().locator("h3")).not.toHaveText(originalMeal);
   const swappedMeal = await cards.first().locator("h3").innerText();
 
+  const portionBefore = await cards.first().locator(".portion-value").innerText();
+  const groceriesBefore = await page.locator("#grocery-list").innerText();
+  const increasePortion = cards.first().getByRole("button", { name: /^Increase/ });
+  await increasePortion.focus();
+  await page.keyboard.press("Enter");
+  await expect(cards.first().locator(".portion-value")).not.toHaveText(portionBefore);
+  await expect(page.locator("#grocery-list")).not.toHaveText(groceriesBefore);
+  await page.getByRole("button", { name: "Undo last edit" }).click();
+  await expect(cards.first().locator(".portion-value")).toHaveText(portionBefore);
+
+  await cards.first().getByRole("button", { name: /^Remove/ }).click();
+  await expect(cards.first()).toContainText("Meal removed");
+  await page.reload();
+  await expect(cards.first()).toContainText("Meal removed");
+  await cards.first().getByRole("button", { name: "Restore meal" }).click();
+  await expect(cards.first().locator("h3")).toHaveText(swappedMeal);
+
   await cards.first().getByRole("button", { name: /^Save/ }).click();
   const grocery = page.locator("#grocery-list input[type=checkbox]").first();
   const groceryKey = await grocery.getAttribute("data-grocery-key");
@@ -62,7 +79,7 @@ test("complete planning journey persists and works offline", async ({ page, cont
   manualRow = page.locator("#grocery-list li", { hasText: "Coffee beans" });
   await expect(manualRow.getByLabel("In pantry")).toBeChecked();
   await expect(page.locator(`input[data-grocery-key="${groceryKey}"]`)).toBeChecked();
-  await expect(cards.first().getByRole("button", { name: /^Remove/ })).toBeVisible();
+  await expect(cards.first().locator('button[data-action="remove"]')).toBeVisible();
 
   const convertButton = page.getByRole("button", { name: /move this plan to a named profile/i });
   await convertButton.scrollIntoViewIfNeeded();
@@ -83,6 +100,7 @@ test("complete planning journey persists and works offline", async ({ page, cont
   await page.emulateMedia({ media: "print" });
   await expect(manualRow).toBeVisible();
   await expect(manualRow.getByLabel("In pantry")).toBeChecked();
+  await expect(cards.first().locator(".meal-actions")).toBeHidden();
   expect(await page.evaluate(() => matchMedia("print").matches)).toBe(true);
   await page.emulateMedia({ media: "screen" });
 
@@ -105,6 +123,7 @@ test("mobile layout exposes the plan shortcut without horizontal overflow", asyn
   await page.goto("/");
   await page.getByRole("button", { name: "Continue as guest" }).click();
   await expect(page.locator("#jump-to-plan")).toBeVisible();
+  await expect(page.locator("#meal-plan .meal-card").first().getByRole("button", { name: /^Increase/ })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   await page.locator("#jump-to-plan").click();
   await expect(page.locator("#plan-heading")).toBeInViewport();

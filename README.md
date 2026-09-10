@@ -221,7 +221,7 @@ a static site and avoid adding a framework unless a later measured need justifie
 - [x] 3. Expand and validate the recipe catalog
 - [x] 4. Improve nutrition feedback and customization
 - [x] 5. Make groceries more practical
-- [ ] 6. Add direct plan editing and better recovery controls
+- [x] 6. Add direct plan editing and better recovery controls
 - [ ] 7. Add code-quality gates and prepare a verified deployment
 
 ### 1. Split the application into focused JavaScript modules
@@ -414,6 +414,19 @@ isolation, and export before marking the step complete.
 ```
 
 ### 6. Add direct plan editing and better recovery controls
+
+Completed September 10, 2026. Every meal now has keyboard-accessible controls to swap it, remove
+and restore it, or change its portion in five-percent increments within the selected budget mode's
+safe bounds. Batch-plan edits apply consistently to every batch day; variety-plan edits affect only
+the selected day. Each edit immediately recalculates daily and average nutrition, target feedback,
+the prep schedule, and generated groceries.
+
+One-step session undo restores the exact prior plan plus purchase and pantry state. Edited portions
+and removed meals are validated and restored after reload and profile switching, while replacement
+meals continue through the same cuisine, protein, and avoided-ingredient eligibility checks. Edit
+controls remain usable on mobile and with a keyboard and are omitted from print. The release and
+browser suites cover portion adjustment, undo, removal, restoration, reload, grocery changes,
+profile migration, mobile layout, print, and offline recovery. The offline cache advanced to `v13`.
 
 Let users replace, remove, restore, or adjust an individual meal without regenerating the whole week.
 Every edit should immediately recompute nutrition and groceries, with undo available for accidental
