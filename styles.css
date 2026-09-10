@@ -928,9 +928,14 @@ legend {
 
 .meal-top {
   display: grid;
-  grid-template-columns: 2.35rem minmax(0, 1fr);
+  grid-template-columns: 2.35rem minmax(0, 1fr) auto;
   gap: 0.7rem;
   align-items: start;
+}
+
+.meal-quick-action {
+  align-self: start;
+  white-space: nowrap;
 }
 
 .meal-icon {
@@ -1512,7 +1517,8 @@ body[data-theme="evening"] .meal-icon {
   }
 
   .section-heading .ghost-button,
-  .section-heading .compact {
+  .section-heading .compact,
+  .meal-quick-action {
     display: none !important;
   }
 
