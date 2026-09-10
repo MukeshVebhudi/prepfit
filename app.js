@@ -217,7 +217,8 @@ function bindEvents() {
 
   dom.form.addEventListener("input", (event) => {
     updateGoalLabel();
-    if (event.target.matches("#avoid-ingredients, #calorie-goal, #carb-goal, #fat-goal")) {
+    if (event.target.matches('input[type="number"]')) return;
+    if (event.target.matches("#avoid-ingredients")) {
       debouncedGenerate();
       return;
     }
