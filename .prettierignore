@@ -1,0 +1,9 @@
+app.js
+nutrition-data.js
+plan-math.js
+recipe-data.js
+modules/
+tests/
+playwright-report/
+test-results/
+coverage/

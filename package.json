@@ -1,0 +1,22 @@
+{
+  "name": "prepfit-browser-tests",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "bash scripts/check.sh",
+    "test:browser": "playwright test",
+    "test:live": "PREPFIT_LIVE=1 PREPFIT_BASE_URL=https://mukeshvebhudi.github.io/prepfit/ playwright test",
+    "lint": "eslint .",
+    "format": "prettier --write package.json manifest.webmanifest eslint.config.js playwright.config.js scripts/validate-static.js .github/workflows/verify.yml",
+    "format:check": "prettier --check package.json manifest.webmanifest eslint.config.js playwright.config.js scripts/validate-static.js .github/workflows/verify.yml",
+    "coverage": "c8 --all --include='plan-math.js' --reporter=text --reporter=json-summary npm test",
+    "validate": "node scripts/validate-static.js",
+    "release": "npm run format:check && npm run lint && npm run validate && npm run coverage"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "c8": "12.0.0",
+    "eslint": "10.10.0",
+    "prettier": "3.9.6"
+  }
+}

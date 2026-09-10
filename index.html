@@ -27,7 +27,7 @@
       <div class="header-actions" aria-label="Quick actions">
         <div id="account-chip" class="account-chip" hidden>
           <span id="account-name">Guest</span>
-          <button id="logout-account" class="ghost-button compact" type="button">Log out</button>
+          <button id="logout-account" class="ghost-button compact" type="button">Switch profile</button>
         </div>
         <button id="theme-toggle" class="ghost-button" type="button" aria-pressed="false">Evening</button>
         <button id="randomize" class="ghost-button" type="button">Shuffle</button>
@@ -39,42 +39,22 @@
     <section id="auth-view" class="auth-view" aria-labelledby="auth-title">
       <div class="auth-card panel">
         <div class="auth-copy">
-          <p class="eyebrow">Account</p>
-          <h2 id="auth-title">Sign in to PrepFit</h2>
-          <p>Keep meal settings, favorites, and saved preferences separate for each local profile on this device.</p>
+          <p class="eyebrow">Local profiles</p>
+          <h2 id="auth-title">Choose a profile</h2>
+          <p>Profiles organize plans saved in this browser. They are not secure accounts, and their data remains on this device.</p>
         </div>
 
-        <button id="guest-start" class="primary-button" type="button">Try it now as a guest</button>
-        <p class="auth-hint">No account needed. Your plan stays on this device — create a free profile any time to keep it long-term.</p>
-
-        <div class="auth-tabs" role="tablist" aria-label="Account mode">
-          <button id="auth-login-tab" class="ghost-button compact" type="button" aria-pressed="true">Log in</button>
-          <button id="auth-register-tab" class="ghost-button compact" type="button" aria-pressed="false">Create account</button>
-        </div>
+        <button id="guest-start" class="ghost-button" type="button">Continue as guest</button>
+        <p class="auth-hint">Guest plans also stay in this browser and can be moved into a named profile later.</p>
 
         <div id="saved-profiles" class="saved-profiles" aria-live="polite"></div>
 
-        <form id="gmail-form" class="gmail-form">
-          <label class="field">
-            <span>Use Gmail address locally</span>
-            <input id="gmail-address" name="gmail" type="email" inputmode="email" autocomplete="email" placeholder="you@gmail.com" />
-          </label>
-          <button id="gmail-submit" class="ghost-button" type="submit">Use Gmail as profile</button>
-          <p class="auth-hint">This does not contact Google. It creates a local PrepFit profile using that Gmail address.</p>
-        </form>
-
-        <div class="auth-divider" role="presentation"><span>or</span></div>
-
         <form id="auth-form" class="auth-form">
           <label class="field">
-            <span>Username</span>
-            <input id="auth-username" name="username" type="text" autocomplete="username" minlength="3" maxlength="24" required />
+            <span>New profile name</span>
+            <input id="auth-username" name="profileName" type="text" autocomplete="off" minlength="2" maxlength="24" required />
           </label>
-          <label class="field">
-            <span>Passcode</span>
-            <input id="auth-passcode" name="passcode" type="password" autocomplete="current-password" minlength="4" required />
-          </label>
-          <button id="auth-submit" class="primary-button" type="submit">Log in</button>
+          <button id="auth-submit" class="primary-button" type="submit">Create local profile</button>
           <p id="auth-message" class="auth-message" aria-live="polite"></p>
         </form>
       </div>
@@ -87,7 +67,7 @@
             <p class="eyebrow">Planner</p>
             <h2 id="planner-title">Build your week</h2>
           </div>
-          <a id="jump-to-plan" class="jump-link" href="#meal-plan" hidden>Jump to today's plan ↓</a>
+          <a id="jump-to-plan" class="jump-link" href="#plan-heading" hidden>Skip settings and view plan ↓</a>
 
           <fieldset>
             <legend>Protein target</legend>
@@ -103,12 +83,38 @@
             </div>
             <label class="field">
               <span id="goal-label">Protein per person per day</span>
-              <input id="protein-goal" name="proteinGoal" type="number" min="40" max="320" step="5" value="150" />
+              <input id="protein-goal" name="proteinGoal" type="number" min="40" max="320" step="5" value="150" aria-describedby="protein-help" />
             </label>
+            <p id="protein-help" class="auth-hint">Allowed range: 40–320g/day.</p>
             <label class="field">
-              <span>Powder protein grams/day</span>
+              <span>Supplemental whey protein grams/day</span>
               <input id="powder-protein" name="powderProtein" type="number" min="0" max="140" step="5" value="0" />
             </label>
+            <details class="supplement-settings">
+              <summary>Customize supplement nutrition</summary>
+              <label class="field">
+                <span>Supplement calculation</span>
+                <select name="supplementMode">
+                  <option value="reference">PrepFit whey reference</option>
+                  <option value="custom">Custom product label</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Product name</span>
+                <input name="supplementLabel" type="text" maxlength="40" value="Whey protein powder" />
+              </label>
+              <div class="field-grid">
+                <label class="field"><span>Product grams/day</span><input name="supplementAmount" type="number" min="0" max="300" step="1" value="30" /></label>
+                <label class="field"><span>Calories/day</span><input name="supplementCalories" type="number" min="0" max="1200" step="1" value="0" /></label>
+                <label class="field"><span>Carbs/day</span><input name="supplementCarbs" type="number" min="0" max="200" step="0.5" value="0" /></label>
+                <label class="field"><span>Fat/day</span><input name="supplementFat" type="number" min="0" max="120" step="0.5" value="0" /></label>
+              </div>
+              <label class="field">
+                <span>Allergen/category tags</span>
+                <input name="supplementAllergens" type="text" value="dairy" placeholder="dairy, legumes" aria-describedby="supplement-help" />
+              </label>
+              <p id="supplement-help" class="auth-hint">Custom values are daily label totals. Set protein to 0 above to disable the supplement.</p>
+            </details>
           </fieldset>
 
           <fieldset>
@@ -126,11 +132,11 @@
             <div class="field-grid">
               <label class="field">
                 <span>People</span>
-                <input id="people" name="people" type="number" min="1" max="8" value="1" />
+                <input id="people" name="people" type="number" min="1" max="8" step="1" value="1" />
               </label>
               <label class="field">
                 <span>Prep days</span>
-                <input id="days" name="days" type="number" min="1" max="7" value="5" />
+                <input id="days" name="days" type="number" min="1" max="7" step="1" value="5" />
               </label>
             </div>
             <div class="field">
@@ -165,8 +171,9 @@
             </label>
             <label class="field">
               <span>Avoid ingredients</span>
-              <input id="avoid-ingredients" name="avoidIngredients" type="text" placeholder="tofu, dairy, beans" autocomplete="off" />
+              <input id="avoid-ingredients" name="avoidIngredients" type="text" placeholder="tofu, dairy, beans" autocomplete="off" aria-describedby="avoid-help" />
             </label>
+            <p id="avoid-help" class="auth-hint">Separate ingredient names with commas. Categories: dairy, meat, fish, eggs, legumes. Names match ingredient text; packaged sauces may contain additional ingredients. Check product labels for allergies.</p>
           </fieldset>
 
           <fieldset>
@@ -191,17 +198,18 @@
             <button class="primary-button" type="submit">Generate Meals</button>
             <button id="reset-plan" class="ghost-button" type="button">Reset</button>
           </div>
-          <p id="planner-note" class="planner-note" aria-live="polite"></p>
+          <p id="planner-note" class="planner-note" role="status" aria-live="polite" aria-atomic="true"></p>
         </form>
       </aside>
 
       <section class="workspace" aria-label="Generated meal prep dashboard">
-        <section class="summary-card panel" aria-labelledby="summary-title" aria-live="polite">
+        <section class="summary-card panel" aria-labelledby="summary-title">
           <div>
             <p class="eyebrow">Current plan</p>
             <h2 id="summary-title">Ready to plan</h2>
             <p id="summary-text">Choose your constraints and PrepFit will assemble a balanced prep plan.</p>
-            <p id="guest-hint" class="auth-hint" hidden>Using PrepFit as a guest on this device — <button id="guest-upgrade" class="link-button" type="button">create a free profile</button> to keep this plan on other devices too.</p>
+            <p id="guest-hint" class="auth-hint" hidden>Using the guest profile in this browser — <button id="guest-upgrade" class="link-button" type="button">move this plan to a named profile</button>.</p>
+            <p class="auth-hint nutrition-note">Nutrition is estimated from specific reference foods. Ingredients show when to weigh them. Supplemental protein uses the listed whey reference; sauces labeled &lt;1 g protein use a conservative lower bound. <a href="nutrition.html" target="_blank" rel="noopener">View reference servings and sources</a>.</p>
           </div>
           <div id="summary-stats" class="stat-grid"></div>
         </section>
@@ -212,7 +220,10 @@
               <p class="eyebrow">Recipes</p>
               <h2 id="plan-heading">Generated meal plan</h2>
             </div>
-            <div id="plan-status" class="status-pill">Auto-generated</div>
+          <div class="plan-heading-actions">
+            <button id="undo-plan-edit" class="ghost-button compact" type="button" hidden>Undo last edit</button>
+            <div id="plan-status" class="status-pill" role="status" aria-live="polite" aria-atomic="true">Auto-generated</div>
+          </div>
           </div>
           <div id="meal-plan" class="meal-plan"></div>
         </section>
@@ -226,6 +237,13 @@
               </div>
               <button id="copy-groceries" class="ghost-button compact" type="button">Copy</button>
             </div>
+            <form id="manual-grocery-form" class="manual-grocery-form">
+              <label class="field"><span>Custom item</span><input name="manualName" maxlength="50" required placeholder="Coffee" /></label>
+              <label class="field"><span>Amount</span><input name="manualAmount" type="number" min="0.01" max="9999" step="0.01" value="1" required /></label>
+              <label class="field"><span>Unit</span><input name="manualUnit" maxlength="16" value="count" required /></label>
+              <button id="manual-grocery-submit" class="ghost-button compact" type="submit">Add item</button>
+              <button id="manual-grocery-cancel" class="link-button" type="button" hidden>Cancel edit</button>
+            </form>
             <div id="grocery-list" class="grocery-list"></div>
           </section>
 
@@ -253,8 +271,9 @@
       </section>
     </main>
 
+    <script src="nutrition-data.js"></script>
     <script src="recipe-data.js"></script>
     <script src="plan-math.js"></script>
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
   </body>
 </html>
