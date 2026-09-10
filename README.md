@@ -220,7 +220,7 @@ a static site and avoid adding a framework unless a later measured need justifie
 - [x] 2. Run real-browser journeys in GitHub Actions
 - [x] 3. Expand and validate the recipe catalog
 - [x] 4. Improve nutrition feedback and customization
-- [ ] 5. Make groceries more practical
+- [x] 5. Make groceries more practical
 - [ ] 6. Add direct plan editing and better recovery controls
 - [ ] 7. Add code-quality gates and prepare a verified deployment
 
@@ -379,6 +379,18 @@ release suite and browser journey pass.
 ```
 
 ### 5. Make groceries more practical
+
+Completed September 9, 2026. Generated ingredients aggregate by normalized purchase unit while
+incompatible units retain separate keys. Each grocery can be marked purchased or already in the
+pantry, and users can add, edit, or remove custom items with bounded names, amounts, and units.
+Those states persist per profile; the schema-v2 migration retains schema-v1 purchase checkmarks.
+
+Regeneration preserves custom items and pantry status, reports that behavior beside the plan, and
+clears purchase or pantry state only when an item disappears or its generated quantity changes.
+The screen, plain-text download, copied list, and print view share the same grocery state. The
+release suite and Playwright journey cover aggregation, quantity reconciliation, custom-item CRUD,
+reload, guest-to-profile conversion, export, print, and offline restore. The offline cache advanced
+to `v12` for this release.
 
 Turn the generated ingredient list into a shopping workflow by grouping compatible units, allowing
 pantry items and manual additions, and supporting quantities that match common package decisions

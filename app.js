@@ -16,7 +16,7 @@ const STORAGE_KEYS = {
   accounts: "prepfit-accounts-v1",
   currentAccount: "prepfit-current-account-v1",
 };
-const PLANNER_SCHEMA_VERSION = 1;
+const PLANNER_SCHEMA_VERSION = 2;
 
 const DEFAULTS = {
   goalMode: "daily",
@@ -70,6 +70,9 @@ const dom = {
   printPlan: document.querySelector("#print-plan"),
   downloadPlan: document.querySelector("#download-plan"),
   copyGroceries: document.querySelector("#copy-groceries"),
+  manualGroceryForm: document.querySelector("#manual-grocery-form"),
+  manualGrocerySubmit: document.querySelector("#manual-grocery-submit"),
+  manualGroceryCancel: document.querySelector("#manual-grocery-cancel"),
   resetPlan: document.querySelector("#reset-plan"),
   clearFavorites: document.querySelector("#clear-favorites"),
   authView: document.querySelector("#auth-view"),
@@ -93,6 +96,9 @@ let profileAction = "create";
 let state = null;
 let lastGroceryText = "";
 let purchasedItems = new Map();
+let pantryItems = new Set();
+let manualGroceries = [];
+let editingManualId = null;
 let storageMessage = "";
 
 const browserStorage = globalThis.localStorage || {
@@ -123,6 +129,7 @@ const migrateLegacyProfiles = profileStore.migrateLegacy;
 const {
   aggregateGroceries,
   formatIngredient,
+  combineGroceries,
   groceryItemKey,
   groceryQuantitySignature,
   groceryText,
@@ -170,7 +177,8 @@ const validatedStoredPlan = persistence.validatePlan;
 const { renderFavorites, renderGroceries, renderMeals, renderPrepSchedule, renderSummary } = createRenderer({
   dom, cuisines: CUISINES, categories: CATEGORIES, proteins: PROTEINS, categoryByIngredient: CATEGORY_BY_INGREDIENT,
   targetResults, nutritionTargetLabel, formatTargetDelta, formatIngredient, marketHint,
-  groceryItemKey, groceryQuantitySignature, getFavorites: () => favorites, getPurchases: () => purchasedItems,
+  groceryItemKey, groceryQuantitySignature, getFavorites: () => favorites,
+  getPurchases: () => purchasedItems, getPantry: () => pantryItems,
 });
 
 initialize();
@@ -221,6 +229,9 @@ function bindEvents() {
 
   dom.mealPlan.addEventListener("click", handleMealAction);
   dom.groceryList.addEventListener("change", handleGroceryChange);
+  dom.groceryList.addEventListener("click", handleGroceryAction);
+  dom.manualGroceryForm.addEventListener("submit", handleManualGrocerySubmit);
+  dom.manualGroceryCancel.addEventListener("click", cancelManualGroceryEdit);
   dom.randomize.addEventListener("click", () => generatePlan({ shuffle: true }));
   dom.themeToggle.addEventListener("click", toggleTheme);
   dom.printPlan.addEventListener("click", () => window.print());
@@ -339,6 +350,9 @@ function logoutAccount() {
   favorites = new Set();
   lastGroceryText = "";
   purchasedItems = new Map();
+  pantryItems = new Set();
+  manualGroceries = [];
+  editingManualId = null;
   storageMessage = "";
   safeRemoveItem(STORAGE_KEYS.currentAccount);
   document.body.classList.remove("is-authenticated");
@@ -443,16 +457,21 @@ function generatePlan(options = {}) {
     console.error("PrepFit nutrition calculation failed", error);
     plan = { days: [], missingTypes: [], conflict: "Nutrition could not be calculated from the ingredient references. No plan is shown. Check ingredient units and preparation states before trying again." };
   }
-  const groceries = aggregateGroceries(plan.days, settings.people, settings);
+  const groceries = combineGroceries(aggregateGroceries(plan.days, settings.people, settings), manualGroceries);
   const averages = averageMacros(plan.days);
   const warning = buildWarning(plan, settings, averages);
   purchasedItems = reconcilePurchases(groceries, purchasedItems);
+  const validGroceryKeys = new Set(groceries.map(groceryItemKey));
+  pantryItems = new Set([...pantryItems].filter((key) => validGroceryKeys.has(key)));
 
   state = { settings, plan, groceries, averages, warning };
-  lastGroceryText = groceryText(groceries);
+  lastGroceryText = groceryText(groceries, purchasedItems, pantryItems);
   const planSaved = savePlannerState();
+  const groceryNote = manualGroceries.length
+    ? `${manualGroceries.length} custom grocery ${manualGroceries.length === 1 ? "item was" : "items were"} preserved.`
+    : "Changes regenerate the plan.";
   renderCurrentState(warning || (settingsSaved && planSaved
-    ? "Auto-saved. Changes regenerate the plan."
+    ? `Auto-saved. ${groceryNote}`
     : "Plan updated, but browser storage could not save it."));
 }
 
@@ -545,10 +564,12 @@ function swapMeal(dayIndex, mealIndex) {
     currentDay.macros = macrosForDay(currentDay.meals, settings);
   }
 
-  state.groceries = aggregateGroceries(state.plan.days, settings.people, settings);
+  state.groceries = combineGroceries(aggregateGroceries(state.plan.days, settings.people, settings), manualGroceries);
   purchasedItems = reconcilePurchases(state.groceries, purchasedItems);
+  const validGroceryKeys = new Set(state.groceries.map(groceryItemKey));
+  pantryItems = new Set([...pantryItems].filter((key) => validGroceryKeys.has(key)));
   state.averages = averageMacros(state.plan.days);
-  lastGroceryText = groceryText(state.groceries);
+  lastGroceryText = groceryText(state.groceries, purchasedItems, pantryItems);
   state.warning = buildWarning(state.plan, settings, state.averages);
   const saved = savePlannerState();
   renderCurrentState(state.warning || (saved
@@ -557,16 +578,98 @@ function swapMeal(dayIndex, mealIndex) {
 }
 
 function handleGroceryChange(event) {
+  const pantryCheckbox = event.target.closest("input[data-pantry-key]");
+  if (pantryCheckbox && state) {
+    if (pantryCheckbox.checked) pantryItems.add(pantryCheckbox.dataset.pantryKey);
+    else pantryItems.delete(pantryCheckbox.dataset.pantryKey);
+    purchasedItems.delete(pantryCheckbox.dataset.pantryKey);
+    lastGroceryText = groceryText(state.groceries, purchasedItems, pantryItems);
+    renderGroceries(state.groceries);
+    const saved = savePlannerState();
+    dom.plannerNote.textContent = saved ? "Pantry items saved on this browser." : "Pantry changed, but browser storage could not save it.";
+    return;
+  }
   const checkbox = event.target.closest("input[data-grocery-key]");
   if (!checkbox || !state) return;
   const item = state.groceries.find((candidate) => groceryItemKey(candidate) === checkbox.dataset.groceryKey);
   if (!item) return;
   if (checkbox.checked) purchasedItems.set(checkbox.dataset.groceryKey, groceryQuantitySignature(item));
   else purchasedItems.delete(checkbox.dataset.groceryKey);
+  pantryItems.delete(checkbox.dataset.groceryKey);
+  lastGroceryText = groceryText(state.groceries, purchasedItems, pantryItems);
   const saved = savePlannerState();
   dom.plannerNote.textContent = saved
     ? "Shopping progress saved on this browser."
     : "Shopping progress changed, but browser storage could not save it.";
+}
+
+function refreshGroceryState(message) {
+  if (!state) return;
+  state.groceries = combineGroceries(
+    aggregateGroceries(state.plan.days, state.settings.people, state.settings), manualGroceries);
+  purchasedItems = reconcilePurchases(state.groceries, purchasedItems);
+  const validKeys = new Set(state.groceries.map(groceryItemKey));
+  pantryItems = new Set([...pantryItems].filter((key) => validKeys.has(key)));
+  lastGroceryText = groceryText(state.groceries, purchasedItems, pantryItems);
+  renderGroceries(state.groceries);
+  const saved = savePlannerState();
+  dom.plannerNote.textContent = saved ? message : `${message} Browser storage could not save it.`;
+}
+
+function handleManualGrocerySubmit(event) {
+  event.preventDefault();
+  if (!state) return;
+  const data = new FormData(dom.manualGroceryForm);
+  const name = String(data.get("manualName") || "").trim().replace(/\s+/g, " ").slice(0, 50);
+  const amount = clamp(numberFrom(data.get("manualAmount"), 1), 0.01, 9999);
+  const unit = String(data.get("manualUnit") || "count").trim().replace(/\s+/g, " ").slice(0, 16) || "count";
+  if (!name) return;
+  const wasEditing = Boolean(editingManualId);
+  if (editingManualId) {
+    const index = manualGroceries.findIndex((item) => item.id === editingManualId);
+    if (index >= 0) {
+      const key = `manual:${editingManualId}`;
+      manualGroceries[index] = { id: editingManualId, name, amount, unit };
+      purchasedItems.delete(key);
+    }
+  } else {
+    const id = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    manualGroceries.push({ id, name, amount, unit });
+  }
+  cancelManualGroceryEdit();
+  refreshGroceryState(wasEditing ? "Custom grocery item updated." : "Custom grocery item added.");
+}
+
+function handleGroceryAction(event) {
+  const button = event.target.closest("button[data-grocery-action]");
+  if (!button) return;
+  const item = manualGroceries.find((candidate) => candidate.id === button.dataset.manualId);
+  if (!item) return;
+  if (button.dataset.groceryAction === "edit") {
+    editingManualId = item.id;
+    dom.manualGroceryForm.elements.manualName.value = item.name;
+    dom.manualGroceryForm.elements.manualAmount.value = item.amount;
+    dom.manualGroceryForm.elements.manualUnit.value = item.unit;
+    dom.manualGrocerySubmit.textContent = "Save item";
+    dom.manualGroceryCancel.hidden = false;
+    dom.manualGroceryForm.elements.manualName.focus();
+    return;
+  }
+  const key = `manual:${item.id}`;
+  manualGroceries = manualGroceries.filter((candidate) => candidate.id !== item.id);
+  purchasedItems.delete(key);
+  pantryItems.delete(key);
+  cancelManualGroceryEdit();
+  refreshGroceryState("Custom grocery item removed.");
+}
+
+function cancelManualGroceryEdit() {
+  editingManualId = null;
+  dom.manualGroceryForm.reset();
+  dom.manualGroceryForm.elements.manualAmount.value = 1;
+  dom.manualGroceryForm.elements.manualUnit.value = "count";
+  dom.manualGrocerySubmit.textContent = "Add item";
+  dom.manualGroceryCancel.hidden = true;
 }
 
 function handleMealAction(event) {
@@ -604,6 +707,9 @@ function resetSettings() {
   safeRemoveItem(accountStorageKey("settings"));
   safeRemoveItem(accountStorageKey("planner"));
   purchasedItems = new Map();
+  pantryItems = new Set();
+  manualGroceries = [];
+  editingManualId = null;
   applySettings(DEFAULTS);
   generatePlan({ shuffle: true });
 }
@@ -627,7 +733,10 @@ function restoreSettings() {
 
 function savePlannerState() {
   if (!state || !currentAccount) return false;
-  return persistence.savePlanner(accountStorageKey("planner"), state, purchasedItems);
+  return persistence.savePlanner(accountStorageKey("planner"), state, purchasedItems, {
+    pantry: pantryItems,
+    manual: manualGroceries,
+  });
 }
 
 function restorePlannerState() {
@@ -645,14 +754,17 @@ function restorePlannerState() {
     return false;
   }
 
-  const groceries = aggregateGroceries(plan.days, settings.people, settings);
+  manualGroceries = record.grocery.manual;
+  const groceries = combineGroceries(aggregateGroceries(plan.days, settings.people, settings), manualGroceries);
   purchasedItems = reconcilePurchases(groceries, new Map(
-    record.purchases && typeof record.purchases === "object" ? Object.entries(record.purchases) : []
+    Object.entries(record.grocery.purchases)
   ));
+  const validKeys = new Set(groceries.map(groceryItemKey));
+  pantryItems = new Set(record.grocery.pantry.filter((key) => validKeys.has(key)));
   const averages = averageMacros(plan.days);
   const warning = buildWarning(plan, settings, averages);
   state = { settings, plan, groceries, averages, warning };
-  lastGroceryText = groceryText(groceries);
+  lastGroceryText = groceryText(groceries, purchasedItems, pantryItems);
   renderCurrentState(warning || "Saved plan and shopping progress restored.");
   return true;
 }

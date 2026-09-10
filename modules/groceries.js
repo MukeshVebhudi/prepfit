@@ -18,7 +18,8 @@ export function createGroceryTools({
     if (Math.abs(amount - 1) < 0.001) return unit;
     return {
       cup: "cups", clove: "cloves", slice: "slices", can: "cans", scoop: "scoops",
-      count: "count", tbsp: "tbsp", tsp: "tsp", oz: "oz",
+      bag: "bags", bottle: "bottles", box: "boxes", jar: "jars", pack: "packs",
+      count: "count", tbsp: "tbsp", tsp: "tsp", oz: "oz", g: "g", kg: "kg", lb: "lb", ml: "ml", l: "l",
     }[unit] || unit;
   }
 
@@ -29,6 +30,7 @@ export function createGroceryTools({
 
   function formatIngredient(ingredient, multiplier) {
     const amount = ingredient.amount * multiplier;
+    if (ingredient.manual) return `${formatAmount(amount)} ${displayUnit(normalizeUnit(ingredient.unit), amount)} ${ingredient.name}`;
     if (ingredient.customSupplement) return `${formatAmount(amount)} g ${ingredient.name} (use product label)`;
     const grams = ingredientGrams({ ...ingredient, amount });
     const unit = nutritionUnit(ingredient.unit);
@@ -39,6 +41,7 @@ export function createGroceryTools({
   }
 
   function marketHint(ingredient) {
+    if (ingredient.manual) return "Custom shopping item.";
     if (ingredient.customSupplement) return "Buy enough product for the configured daily weight; verify its label and allergen statement.";
     const reference = nutrition[ingredient.name];
     if (reference.preparation.startsWith("cooked")) {
@@ -50,6 +53,7 @@ export function createGroceryTools({
   }
 
   function groceryItemKey(item) {
+    if (item.manual) return `manual:${item.id}`;
     return `${item.name.toLowerCase()}|${normalizeUnit(item.unit)}`;
   }
 
@@ -106,16 +110,27 @@ export function createGroceryTools({
     });
   }
 
-  function groceryText(groceries) {
+  function combineGroceries(generated, manualItems) {
+    return [...generated, ...manualItems.map((item) => ({
+      ...item, manual: true, category: "Other", preparation: "manual item",
+    }))];
+  }
+
+  function groceryText(groceries, purchases = new Map(), pantry = new Set()) {
     const groups = groupBy(groceries, "category");
     return categories.filter((category) => groups[category]?.length).map((category) => {
-      const lines = groups[category].map((item) => `- ${formatIngredient(item, 1)} (${marketHint(item)})`).join("\n");
+      const lines = groups[category].map((item) => {
+        const key = groceryItemKey(item);
+        const marker = pantry.has(key) ? "[pantry]" : purchases.get(key) === groceryQuantitySignature(item) ? "[x]" : "[ ]";
+        return `${marker} ${formatIngredient(item, 1)} (${marketHint(item)})`;
+      }).join("\n");
       return `${category}\n${lines}`;
     }).join("\n\n");
   }
 
   return {
     aggregateGroceries,
+    combineGroceries,
     formatIngredient,
     groceryItemKey,
     groceryQuantitySignature,

@@ -1026,6 +1026,47 @@ body[data-theme="evening"] .meal-icon {
   margin-top: 1rem;
 }
 
+.manual-grocery-form {
+  display: grid;
+  grid-template-columns: minmax(8rem, 2fr) minmax(5rem, 0.8fr) minmax(5rem, 0.8fr) auto;
+  gap: 0.55rem;
+  align-items: end;
+  margin-top: 1rem;
+}
+
+.manual-grocery-form .field {
+  gap: 0.25rem;
+}
+
+.grocery-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+  margin: 0.4rem 0 0 1.5rem;
+  font-size: 0.78rem;
+}
+
+.grocery-item-actions label {
+  display: flex;
+  grid-template-columns: none;
+  align-items: center;
+}
+
+.grocery-category li.is-pantry > label > span {
+  opacity: 0.62;
+}
+
+@media (max-width: 620px) {
+  .manual-grocery-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .manual-grocery-form .field:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
 .grocery-category {
   display: grid;
   gap: 0.45rem;
@@ -1293,6 +1334,11 @@ body[data-theme="evening"] .meal-icon {
   .skip-link,
   .favorites-panel,
   .status-pill {
+    display: none !important;
+  }
+
+  .manual-grocery-form,
+  .grocery-item-actions button {
     display: none !important;
   }
 

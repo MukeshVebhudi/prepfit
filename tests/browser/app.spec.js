@@ -21,6 +21,19 @@ test("complete planning journey persists and works offline", async ({ page, cont
   await expect(page.locator("#summary-stats")).toContainText("Rice Protein Blend: 25g protein/day");
   await expect(page.locator("#grocery-list")).toContainText("Rice Protein Blend");
 
+  await page.locator('[name="manualName"]').fill("Coffee beans");
+  await page.locator('[name="manualAmount"]').fill("2");
+  await page.locator('[name="manualUnit"]').fill("bag");
+  await page.getByRole("button", { name: "Add item" }).click();
+  let manualRow = page.locator("#grocery-list li", { hasText: "Coffee beans" });
+  await expect(manualRow).toContainText("2 bags");
+  await manualRow.getByRole("button", { name: "Edit" }).click();
+  await page.locator('[name="manualAmount"]').fill("3");
+  await page.getByRole("button", { name: "Save item" }).click();
+  manualRow = page.locator("#grocery-list li", { hasText: "Coffee beans" });
+  await expect(manualRow).toContainText("3 bags");
+  await manualRow.getByLabel("In pantry").check();
+
   await page.getByText("Variety", { exact: true }).click();
   await page.getByText("Vegetarian", { exact: true }).click();
   await page.locator("#avoid-ingredients").fill("peanut butter");
@@ -29,6 +42,7 @@ test("complete planning journey persists and works offline", async ({ page, cont
 
   const cards = page.locator("#meal-plan .meal-card");
   await expect(cards).toHaveCount(9);
+  await expect(page.locator("#grocery-list li", { hasText: "Coffee beans" })).toContainText("3 bags");
   await expect(page.locator("#meal-plan")).not.toContainText(/chicken|turkey|beef|sirloin steak|salmon|tuna|peanut butter/i);
 
   const originalMeal = await cards.first().locator("h3").innerText();
@@ -45,6 +59,8 @@ test("complete planning journey persists and works offline", async ({ page, cont
   await expect(cards.first().locator("h3")).toHaveText(swappedMeal);
   await expect(page.locator('[name="supplementLabel"]')).toHaveValue("Rice Protein Blend");
   await expect(page.locator('[name="supplementCalories"]')).toHaveValue("150");
+  manualRow = page.locator("#grocery-list li", { hasText: "Coffee beans" });
+  await expect(manualRow.getByLabel("In pantry")).toBeChecked();
   await expect(page.locator(`input[data-grocery-key="${groceryKey}"]`)).toBeChecked();
   await expect(cards.first().getByRole("button", { name: /^Remove/ })).toBeVisible();
 
@@ -55,18 +71,24 @@ test("complete planning journey persists and works offline", async ({ page, cont
   await page.getByRole("button", { name: "Move guest plan" }).click();
   await expect(page.getByText("Browser Test", { exact: true }).first()).toBeVisible();
   await expect(cards.first().locator("h3")).toHaveText(swappedMeal);
-
   const downloadEvent = page.waitForEvent("download");
   await page.getByRole("button", { name: "Download" }).click();
   const download = await downloadEvent;
   const downloadPath = testInfo.outputPath("prepfit-plan.txt");
   await download.saveAs(downloadPath);
-  expect((await require("node:fs/promises").stat(downloadPath)).size).toBeGreaterThan(100);
+  const fileSystem = require("node:fs/promises");
+  expect((await fileSystem.stat(downloadPath)).size).toBeGreaterThan(100);
+  expect(await fileSystem.readFile(downloadPath, "utf8")).toContain("[pantry] 3 bags Coffee beans");
 
   await page.emulateMedia({ media: "print" });
-  await expect(page.locator("#meal-plan")).toBeVisible();
+  await expect(manualRow).toBeVisible();
+  await expect(manualRow.getByLabel("In pantry")).toBeChecked();
   expect(await page.evaluate(() => matchMedia("print").matches)).toBe(true);
   await page.emulateMedia({ media: "screen" });
+
+  manualRow = page.locator("#grocery-list li", { hasText: "Coffee beans" });
+  await manualRow.getByRole("button", { name: "Remove" }).click();
+  await expect(page.locator("#grocery-list li", { hasText: "Coffee beans" })).toHaveCount(0);
 
   await page.reload();
   await page.waitForFunction(() => navigator.serviceWorker.controller);

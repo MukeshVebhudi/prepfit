@@ -17,13 +17,18 @@ export function createPersistence({ storage, schemaVersion, mealTypes, recipes, 
     return { ...defaults, ...(parseJson(storage.get(key)) || parseJson(storage.get(fallbackKey)) || {}) };
   }
 
-  function savePlanner(key, state, purchases) {
+  function savePlanner(key, state, purchases, groceryState = {}) {
     const record = {
       schemaVersion,
       savedAt: new Date().toISOString(),
       settings: { ...state.settings, excluded: undefined },
       plan: state.plan,
       purchases: Object.fromEntries(purchases),
+      grocery: {
+        purchases: Object.fromEntries(purchases),
+        pantry: [...(groceryState.pantry || [])],
+        manual: (groceryState.manual || []).map((item) => ({ ...item })),
+      },
     };
     delete record.settings.excluded;
     return storage.set(key, JSON.stringify(record));
@@ -33,11 +38,23 @@ export function createPersistence({ storage, schemaVersion, mealTypes, recipes, 
     const raw = storage.get(key);
     if (!raw) return { kind: "missing" };
     const record = parseJson(raw);
-    if (!record || record.schemaVersion !== schemaVersion || !record.settings || !record.plan) {
+    if (!record || ![1, schemaVersion].includes(record.schemaVersion) || !record.settings || !record.plan) {
       storage.remove(key);
       return { kind: "invalid", message: "Saved plan data was outdated or damaged, so PrepFit created a fresh plan." };
     }
-    return { kind: "ready", record };
+    const grocery = record.schemaVersion === 1
+      ? { purchases: record.purchases || {}, pantry: [], manual: [] }
+      : record.grocery;
+    if (!grocery || typeof grocery.purchases !== "object" || !Array.isArray(grocery.pantry)
+      || grocery.pantry.some((key) => typeof key !== "string")
+      || !Array.isArray(grocery.manual) || grocery.manual.some((item) => !item || typeof item.id !== "string"
+        || typeof item.name !== "string" || !item.name.trim() || item.name.length > 50
+        || !Number.isFinite(item.amount) || item.amount <= 0 || item.amount > 9999
+        || typeof item.unit !== "string" || !item.unit.trim() || item.unit.length > 16)) {
+      storage.remove(key);
+      return { kind: "invalid", message: "Saved grocery data was damaged, so PrepFit created a fresh plan." };
+    }
+    return { kind: "ready", record: { ...record, grocery } };
   }
 
   function validatePlan(savedPlan, settings) {

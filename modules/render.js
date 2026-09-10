@@ -2,7 +2,7 @@ import { escapeAttr, escapeHtml, groupBy, listWords, plural } from "./utils.js";
 
 export function createRenderer({ dom, cuisines, categories, proteins, categoryByIngredient,
   targetResults, nutritionTargetLabel, formatTargetDelta, formatIngredient, marketHint,
-  groceryItemKey, groceryQuantitySignature, getFavorites, getPurchases }) {
+  groceryItemKey, groceryQuantitySignature, getFavorites, getPurchases, getPantry }) {
   const budgetLabel = (value) => ({ standard: "Standard", budget: "Budget", "high-protein": "High protein" }[value] || "Standard");
 
   function renderSummary(settings, plan, averages, warning) {
@@ -55,10 +55,11 @@ export function createRenderer({ dom, cuisines, categories, proteins, categoryBy
 
   function renderGroceries(groceries) {
     if (!groceries.length) { dom.groceryList.innerHTML = `<p class="empty-state">Generate a plan to see the shopping list.</p>`; return; }
-    const groups = groupBy(groceries, "category"); const purchases = getPurchases();
+    const groups = groupBy(groceries, "category"); const purchases = getPurchases(); const pantry = getPantry();
     dom.groceryList.innerHTML = categories.filter((category) => groups[category]?.length).map((category) => `<section class="grocery-category"><h3>${category}<span class="badge">${groups[category].length}</span></h3><ul>${groups[category].map((item) => {
       const key = groceryItemKey(item); const checked = purchases.get(key) === groceryQuantitySignature(item);
-      return `<li><label><input type="checkbox" data-grocery-key="${escapeAttr(key)}" ${checked ? "checked" : ""} aria-label="Mark ${escapeAttr(item.name)} purchased" /><span><strong>${escapeHtml(formatIngredient(item, 1))}</strong><small>${escapeHtml(marketHint(item))}</small></span></label></li>`;
+      const inPantry = pantry.has(key);
+      return `<li class="${inPantry ? "is-pantry" : ""}"><label><input type="checkbox" data-grocery-key="${escapeAttr(key)}" ${checked ? "checked" : ""} aria-label="Mark ${escapeAttr(item.name)} purchased" /><span><strong>${escapeHtml(formatIngredient(item, 1))}</strong><small>${escapeHtml(marketHint(item))}</small></span></label><div class="grocery-item-actions"><label><input type="checkbox" data-pantry-key="${escapeAttr(key)}" ${inPantry ? "checked" : ""} /> In pantry</label>${item.manual ? `<button class="link-button" type="button" data-grocery-action="edit" data-manual-id="${escapeAttr(item.id)}">Edit</button><button class="link-button" type="button" data-grocery-action="remove" data-manual-id="${escapeAttr(item.id)}">Remove</button>` : ""}</div></li>`;
     }).join("")}</ul></section>`).join("");
   }
 

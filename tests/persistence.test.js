@@ -32,18 +32,35 @@ renderCurrentState = () => {};
 currentAccount = { id: 'alice', name: 'Alice' };
 const settings = { ...DEFAULTS, dailyTarget: 150, excluded: [], days: 2, mealMode: 'variety' };
 const plan = buildPlan(settings, { shuffle: true });
-const groceries = aggregateGroceries(plan.days, settings.people, settings.powderProtein);
+const generatedGroceries = aggregateGroceries(plan.days, settings.people, settings.powderProtein);
+manualGroceries = [{ id: 'coffee', name: 'Coffee', amount: 2, unit: 'bag' }];
+const groceries = combineGroceries(generatedGroceries, manualGroceries);
 const averages = averageMacros(plan.days);
 state = { settings, plan, groceries, averages, warning: buildWarning(plan, settings, averages) };
 
 const first = groceries[0];
 purchasedItems = new Map([[groceryItemKey(first), groceryQuantitySignature(first)]]);
+pantryItems = new Set([groceryItemKey(groceries[1])]);
 assert.equal(savePlannerState(), true);
 const savedRaw = localStorage.getItem(accountStorageKey('planner'));
 const saved = JSON.parse(savedRaw);
-assert.equal(saved.schemaVersion, 1);
+assert.equal(saved.schemaVersion, 2);
 assert.equal(saved.plan.days.length, 2);
 assert.equal(saved.purchases[groceryItemKey(first)], groceryQuantitySignature(first));
+assert.equal(saved.grocery.manual[0].name, 'Coffee');
+assert.deepEqual(saved.grocery.pantry, [...pantryItems]);
+assert.match(groceryText(groceries, purchasedItems, pantryItems), /\[x\]/);
+assert.match(groceryText(groceries, purchasedItems, pantryItems), /\[pantry\]/);
+assert.match(groceryText(groceries, purchasedItems, pantryItems), /2 bags Coffee/);
+
+const legacyRecord = { ...saved, schemaVersion: 1 };
+delete legacyRecord.grocery;
+localStorage.setItem(accountStorageKey('planner'), JSON.stringify(legacyRecord));
+const migratedPlanner = persistence.loadPlanner(accountStorageKey('planner'));
+assert.equal(migratedPlanner.kind, 'ready');
+assert.deepEqual(migratedPlanner.record.grocery.manual, []);
+assert.deepEqual(migratedPlanner.record.grocery.pantry, []);
+localStorage.setItem(accountStorageKey('planner'), savedRaw);
 
 const restored = validatedStoredPlan(saved.plan, settings);
 assert.ok(restored);
