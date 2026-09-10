@@ -95,9 +95,24 @@ function targetFitScore(actual, settings) {
   }, 0);
 }
 
+function supplementMacros(supplement) {
+  const settings = typeof supplement === "number" ? { powderProtein: supplement } : (supplement || {});
+  const protein = clamp(Number(settings.powderProtein) || 0, 0, 140);
+  if (protein === 0) return emptyMacros();
+  if (settings.supplementMode === "custom") {
+    return {
+      protein,
+      calories: clamp(Number(settings.supplementCalories) || 0, 0, 1200),
+      carbs: clamp(Number(settings.supplementCarbs) || 0, 0, 200),
+      fat: clamp(Number(settings.supplementFat) || 0, 0, 120),
+    };
+  }
+  return macrosForIngredient(supplementalPowderIngredient(protein));
+}
+
 function bestPortionRatio(meals, settings) {
   const base = meals.reduce((sum, meal) => addMacros(sum, meal.macros), emptyMacros());
-  const supplement = macrosForIngredient(supplementalPowderIngredient(settings.powderProtein));
+  const supplement = supplementMacros(settings);
   let numerator = 0;
   let denominator = 0;
 
@@ -124,9 +139,9 @@ function sumMacros(sum, meal) {
   return addMacros(sum, meal.macros);
 }
 
-function macrosForDay(meals, powderProtein) {
+function macrosForDay(meals, supplement) {
   const macros = meals.reduce(sumMacros, emptyMacros());
-  return addMacros(macros, macrosForIngredient(supplementalPowderIngredient(powderProtein)));
+  return addMacros(macros, supplementMacros(supplement));
 }
 
 function averageMacros(days) {
@@ -145,6 +160,6 @@ if (typeof module !== "undefined" && module.exports) {
     PORTION_LIMITS, TARGET_SPECS, clamp, integerInRange, proteinInputBounds,
     normalizedProteinGoal, roundAmount, cloneRecipe, scaleMeal, normalizeMealPortion,
     portionLimits, requestedTargets, targetTolerance, targetResults, targetFitScore,
-    bestPortionRatio, scaleMealsToTargets, sumMacros, macrosForDay, averageMacros,
+    bestPortionRatio, scaleMealsToTargets, sumMacros, supplementMacros, macrosForDay, averageMacros,
   };
 }

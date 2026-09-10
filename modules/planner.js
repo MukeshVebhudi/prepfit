@@ -51,7 +51,7 @@ export function createPlanner({ recipes, mealTypes, ingredientTags, cloneRecipe,
     candidates[0].forEach((breakfast) => candidates[1].forEach((lunch) => candidates[2].forEach((dinner) => {
       const rawMeals = [breakfast, lunch, dinner].map(cloneRecipe);
       const meals = scaleMealsToTargets(rawMeals, settings);
-      const actual = macrosForDay(meals, settings.powderProtein);
+      const actual = macrosForDay(meals, settings);
       const preference = rawMeals.reduce((sum, meal, index) =>
         sum + recipeScore(meal, mealTypes[index], settings, usedNames, seed, index), 0);
       const score = targetFitScore(actual, settings) * 100 + preference;
@@ -62,17 +62,19 @@ export function createPlanner({ recipes, mealTypes, ingredientTags, cloneRecipe,
 
   function makeDay(day, selected, settings) {
     const meals = selected.meals.map((meal, index) => ({ ...meal, label: mealTypes[index] }));
-    return { day, meals, macros: macrosForDay(meals, settings.powderProtein) };
+    return { day, meals, macros: macrosForDay(meals, settings) };
   }
 
   function buildPlan(settings, options = {}) {
     const usedNames = new Set();
     const days = [];
     const seed = options.shuffle ? Math.random() : 0;
-    if (settings.powderProtein && !recipeEligible({
-      proteinType: "vegetarian", ingredients: [supplementalPowderIngredient(settings.powderProtein)],
-    }, "Breakfast", settings)) {
-      return { days, missingTypes: [], conflict: "The supplemental whey powder conflicts with your avoided ingredients. Set supplemental protein to zero or change the exclusion; restrictions have not been relaxed." };
+    const supplementTerms = settings.supplementMode === "custom"
+      ? `${settings.supplementLabel || ""},${settings.supplementAllergens || ""}`.toLowerCase()
+      : "whey protein powder,dairy";
+    if (settings.powderProtein && settings.excluded.some((term) => supplementTerms.includes(term))) {
+      const label = settings.supplementMode === "custom" ? "configured supplement" : "supplemental whey";
+      return { days, missingTypes: [], conflict: `The ${label} conflicts with your avoided ingredients or allergen tags. Set supplemental protein to zero or change the supplement details; restrictions have not been relaxed.` };
     }
     const missingTypes = mealTypes.filter((type) => !recipeCandidates(type, settings).length);
     if (missingTypes.length) return { days, missingTypes };
@@ -102,11 +104,22 @@ export function createPlanner({ recipes, mealTypes, ingredientTags, cloneRecipe,
     }
     const limits = portionLimits(settings);
     const outside = targetResults(averages, settings).filter((result) => result.kind !== "near");
-    if (settings.powderProtein > settings.dailyTarget) warnings.push("Supplemental whey alone exceeds the protein target; food portions stay at the minimum.");
+    if (settings.powderProtein > settings.dailyTarget) warnings.push("The supplement alone exceeds the protein target; food portions stay at the minimum.");
     if (outside.length) {
       const details = outside.map((result) =>
         `${nutritionTargetLabel(result.nutrient).toLowerCase()} is ${formatTargetDelta(result)}`).join(", ");
-      warnings.push(`Closest plan within ${limits.min}×–${limits.max}× portion limits: ${details}.`);
+      const ratios = plan.days.flatMap((day) => day.meals.map((meal) => meal.portionRatio || 1));
+      const atMaximum = ratios.length && ratios.every((ratio) => ratio >= limits.max - 0.001);
+      const atMinimum = ratios.length && ratios.every((ratio) => ratio <= limits.min + 0.001);
+      const directions = new Set(outside.map((result) => result.kind));
+      const reason = atMaximum && directions.has("under")
+        ? " Portions reached the allowed maximum; matching catalog meals cannot supply more without exceeding the portion limit."
+        : atMinimum && directions.has("over")
+          ? " Portions reached the allowed minimum; the selected meals or supplement cannot be reduced further."
+          : directions.size > 1
+            ? " The selected targets pull portions in different directions, so one shared portion size cannot satisfy all of them."
+            : " The closest eligible catalog combination remains outside tolerance.";
+      warnings.push(`Closest plan within ${limits.min}×–${limits.max}× portion limits: ${details}.${reason}`);
     }
     return warnings.join(" ");
   }

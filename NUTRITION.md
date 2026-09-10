@@ -75,12 +75,18 @@ A lemon count represents 48 g of juice yielded, not the mass of an entire lemon.
   is explicitly optional and outside the estimate; it may conflict with ingredient exclusions.
 - Shopping merges equivalent units into grams by ingredient. Nutrition recomputed from the grocery
   amounts equals the complete plan's nutrition multiplied by the number of people.
-- Supplemental protein uses the same generic USDA whey-based powder reference as recipes, not a
-  claim about all brands. Grams of protein convert to grams of powder, and all four nutrients plus
-  the shopping quantity follow that amount. It is blocked when whey conflicts with exclusions.
-  Custom supplement labels and target optimization remain future work.
+- Supplemental protein defaults to the generic USDA whey-based powder reference used by recipes,
+  not a claim about all brands. Users may instead enter a custom product name, daily product weight,
+  protein, calories, carbohydrate, fat, and allergen/category tags from its package label. Custom
+  label data stays in the local profile and is not represented as independently verified. Setting
+  supplemental protein to zero disables all supplement macros and grocery quantities. Both modes
+  participate in target optimization and respect the configured exclusions.
 
 ## Verification and maintenance
+
+Fiber and sodium are not displayed because the current reference catalog does not contain validated
+values for every ingredient and preparation state. PrepFit will add those totals only after complete
+source coverage and unit validation; a partial total would be misleading.
 
 Run:
 

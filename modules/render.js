@@ -22,7 +22,7 @@ export function createRenderer({ dom, cuisines, categories, proteins, categoryBy
     const stats = [
       ["Duration", `${settings.days} ${plural("day", settings.days)}`], ["People", settings.people],
       ...results.map((result) => [nutritionTargetLabel(result.nutrient), `${Math.round(result.actual)}${result.unit} / ${Math.round(result.target)}${result.unit} (${formatTargetDelta(result)})`]),
-      ["Powder", `${settings.powderProtein}g/day`], ["Cuisine", settings.cuisine === "random" ? "Mixed" : cuisines[settings.cuisine]],
+      ["Supplement", settings.powderProtein ? `${settings.supplementMode === "custom" ? settings.supplementLabel : "Whey protein powder"}: ${settings.powderProtein}g protein/day` : "Disabled"], ["Cuisine", settings.cuisine === "random" ? "Mixed" : cuisines[settings.cuisine]],
       ["Budget", budgetLabel(settings.budget)], ["Avg calories", Math.round(averages.calories)],
       ["Avg carbs", `${Math.round(averages.carbs)}g`], ["Avg fat", `${Math.round(averages.fat)}g`],
       ["Total meals", settings.days * settings.people * 3], ["Target status", outside.length ? `${outside.length} outside tolerance` : "Within tolerance"],

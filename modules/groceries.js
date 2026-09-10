@@ -29,6 +29,7 @@ export function createGroceryTools({
 
   function formatIngredient(ingredient, multiplier) {
     const amount = ingredient.amount * multiplier;
+    if (ingredient.customSupplement) return `${formatAmount(amount)} g ${ingredient.name} (use product label)`;
     const grams = ingredientGrams({ ...ingredient, amount });
     const unit = nutritionUnit(ingredient.unit);
     const quantity = `${formatAmount(amount)} ${displayUnit(unit, amount)}`;
@@ -38,6 +39,7 @@ export function createGroceryTools({
   }
 
   function marketHint(ingredient) {
+    if (ingredient.customSupplement) return "Buy enough product for the configured daily weight; verify its label and allergen statement.";
     const reference = nutrition[ingredient.name];
     if (reference.preparation.startsWith("cooked")) {
       return "Cook enough to yield this cooked weight, or buy ready-cooked. Raw/dry purchase weight depends on cooking yield.";
@@ -65,7 +67,7 @@ export function createGroceryTools({
     return next;
   }
 
-  function aggregateGroceries(days, people, powderProtein = 0) {
+  function aggregateGroceries(days, people, supplement = 0) {
     const map = new Map();
     function add(ingredient) {
       const amount = ingredientGrams(ingredient) * people;
@@ -79,9 +81,24 @@ export function createGroceryTools({
       current.amount += amount;
       map.set(ingredient.name, current);
     }
+    function addCustomSupplement(settings) {
+      const name = settings.supplementLabel || "Custom supplement";
+      const amount = (Number(settings.supplementAmount) || 0) * people;
+      if (!amount) return;
+      const current = map.get(name) || {
+        name, unit: "g", amount: 0, preparation: "use product label", category: "Pantry",
+        customSupplement: true,
+      };
+      current.amount += amount;
+      map.set(name, current);
+    }
+    const settings = typeof supplement === "number" ? { powderProtein: supplement } : (supplement || {});
     days.forEach((day) => {
       day.meals.forEach((meal) => meal.ingredients.forEach(add));
-      if (powderProtein) add(supplementalPowderIngredient(powderProtein));
+      if (settings.powderProtein) {
+        if (settings.supplementMode === "custom") addCustomSupplement(settings);
+        else add(supplementalPowderIngredient(settings.powderProtein));
+      }
     });
     return [...map.values()].sort((a, b) => {
       const categoryDelta = categories.indexOf(a.category) - categories.indexOf(b.category);

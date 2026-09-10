@@ -74,11 +74,23 @@ const swappedRecord = JSON.parse(localStorage.getItem(aliceKey));
 assert.notEqual(state.plan.days[0].meals[0].name, beforeSwap);
 assert.equal(swappedRecord.plan.days[0].meals[0].name, state.plan.days[0].meals[0].name);
 
+localStorage.setItem(accountStorageKey('settings'), JSON.stringify({ days: 4, powderProtein: 20 }));
+const migratedSettings = persistence.loadSettings(accountStorageKey('settings'), STORAGE_KEYS.settings, DEFAULTS);
+assert.equal(migratedSettings.supplementMode, 'reference');
+assert.equal(migratedSettings.supplementLabel, 'Whey protein powder');
+const customSettings = { ...settings, supplementMode: 'custom', supplementLabel: 'Rice Blend',
+  supplementAmount: 35, supplementCalories: 150, supplementCarbs: 6, supplementFat: 3,
+  supplementAllergens: '' };
+assert.equal(persistence.saveSettings(accountStorageKey('settings'), customSettings), true);
+const restoredCustom = JSON.parse(localStorage.getItem(accountStorageKey('settings')));
+assert.equal(restoredCustom.supplementLabel, 'Rice Blend');
+assert.equal(restoredCustom.supplementCalories, 150);
+
 const originalSetItem = localStorage.setItem;
 localStorage.setItem = () => { throw new Error('quota'); };
 assert.equal(safeSetItem('test', 'value'), false);
 assert.match(storageMessage, /storage is unavailable/);
 localStorage.setItem = originalSetItem;
 
-console.log('PASS: exact plan, swaps, grocery progress, validation, storage failure, and profile isolation');
+console.log('PASS: exact plan, swaps, grocery progress, supplement migration, storage failure, and profile isolation');
 `, context);

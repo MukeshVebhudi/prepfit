@@ -8,6 +8,19 @@ test("complete planning journey persists and works offline", async ({ page, cont
   await page.getByRole("button", { name: "Continue as guest" }).click();
   await expect(page.locator("#meal-plan .meal-card").first()).toBeVisible();
 
+  await page.getByText("Customize supplement nutrition", { exact: true }).click();
+  await page.locator('[name="supplementMode"]').selectOption("custom");
+  await page.locator('[name="supplementLabel"]').fill("Rice Protein Blend");
+  await page.locator('[name="supplementAmount"]').fill("35");
+  await page.locator('[name="supplementCalories"]').fill("150");
+  await page.locator('[name="supplementCarbs"]').fill("6");
+  await page.locator('[name="supplementFat"]').fill("3");
+  await page.locator('[name="supplementAllergens"]').fill("");
+  await page.locator("#powder-protein").fill("25");
+  await page.locator("#powder-protein").blur();
+  await expect(page.locator("#summary-stats")).toContainText("Rice Protein Blend: 25g protein/day");
+  await expect(page.locator("#grocery-list")).toContainText("Rice Protein Blend");
+
   await page.getByText("Variety", { exact: true }).click();
   await page.getByText("Vegetarian", { exact: true }).click();
   await page.locator("#avoid-ingredients").fill("peanut butter");
@@ -30,6 +43,8 @@ test("complete planning journey persists and works offline", async ({ page, cont
 
   await page.reload();
   await expect(cards.first().locator("h3")).toHaveText(swappedMeal);
+  await expect(page.locator('[name="supplementLabel"]')).toHaveValue("Rice Protein Blend");
+  await expect(page.locator('[name="supplementCalories"]')).toHaveValue("150");
   await expect(page.locator(`input[data-grocery-key="${groceryKey}"]`)).toBeChecked();
   await expect(cards.first().getByRole("button", { name: /^Remove/ })).toBeVisible();
 

@@ -22,6 +22,13 @@ const DEFAULTS = {
   goalMode: "daily",
   proteinGoal: 150,
   powderProtein: 0,
+  supplementMode: "reference",
+  supplementLabel: "Whey protein powder",
+  supplementAmount: 30,
+  supplementCalories: 0,
+  supplementCarbs: 0,
+  supplementFat: 0,
+  supplementAllergens: "dairy",
   people: 1,
   days: 5,
   mealMode: "batch",
@@ -436,7 +443,7 @@ function generatePlan(options = {}) {
     console.error("PrepFit nutrition calculation failed", error);
     plan = { days: [], missingTypes: [], conflict: "Nutrition could not be calculated from the ingredient references. No plan is shown. Check ingredient units and preparation states before trying again." };
   }
-  const groceries = aggregateGroceries(plan.days, settings.people, settings.powderProtein);
+  const groceries = aggregateGroceries(plan.days, settings.people, settings);
   const averages = averageMacros(plan.days);
   const warning = buildWarning(plan, settings, averages);
   purchasedItems = reconcilePurchases(groceries, purchasedItems);
@@ -479,6 +486,13 @@ function readSettings() {
     proteinGoal: rawProtein,
     dailyTarget,
     powderProtein: clamp(numberFrom(data.get("powderProtein"), 0), 0, 140),
+    supplementMode: oneOf(data.get("supplementMode"), ["reference", "custom"], DEFAULTS.supplementMode),
+    supplementLabel: String(data.get("supplementLabel") || DEFAULTS.supplementLabel).trim().slice(0, 40) || DEFAULTS.supplementLabel,
+    supplementAmount: clamp(numberFrom(data.get("supplementAmount"), DEFAULTS.supplementAmount), 0, 300),
+    supplementCalories: clamp(numberFrom(data.get("supplementCalories"), 0), 0, 1200),
+    supplementCarbs: clamp(numberFrom(data.get("supplementCarbs"), 0), 0, 200),
+    supplementFat: clamp(numberFrom(data.get("supplementFat"), 0), 0, 120),
+    supplementAllergens: String(data.get("supplementAllergens") || "").trim().slice(0, 100),
     people,
     days,
     mealMode: oneOf(data.get("mealMode"), ["batch", "variety"], DEFAULTS.mealMode),
@@ -515,7 +529,7 @@ function swapMeal(dayIndex, mealIndex) {
   candidates.forEach((candidate) => {
     const proposed = baseMeals.map((meal, index) => index === mealIndex ? cloneRecipe(candidate) : cloneRecipe(meal));
     const meals = scaleMealsToTargets(proposed, settings);
-    const score = targetFitScore(macrosForDay(meals, settings.powderProtein), settings)
+    const score = targetFitScore(macrosForDay(meals, settings), settings)
       + recipeScore(candidate, type, settings, usedNames, Math.random(), mealIndex) / 100;
     if (!bestSwap || score < bestSwap.score) bestSwap = { score, meals };
   });
@@ -524,14 +538,14 @@ function swapMeal(dayIndex, mealIndex) {
   if (settings.mealMode === "batch") {
     state.plan.days.forEach((day) => {
       day.meals = bestSwap.meals.map(cloneRecipe);
-      day.macros = macrosForDay(day.meals, settings.powderProtein);
+      day.macros = macrosForDay(day.meals, settings);
     });
   } else {
     currentDay.meals = bestSwap.meals;
-    currentDay.macros = macrosForDay(currentDay.meals, settings.powderProtein);
+    currentDay.macros = macrosForDay(currentDay.meals, settings);
   }
 
-  state.groceries = aggregateGroceries(state.plan.days, settings.people, settings.powderProtein);
+  state.groceries = aggregateGroceries(state.plan.days, settings.people, settings);
   purchasedItems = reconcilePurchases(state.groceries, purchasedItems);
   state.averages = averageMacros(state.plan.days);
   lastGroceryText = groceryText(state.groceries);
@@ -631,7 +645,7 @@ function restorePlannerState() {
     return false;
   }
 
-  const groceries = aggregateGroceries(plan.days, settings.people, settings.powderProtein);
+  const groceries = aggregateGroceries(plan.days, settings.people, settings);
   purchasedItems = reconcilePurchases(groceries, new Map(
     record.purchases && typeof record.purchases === "object" ? Object.entries(record.purchases) : []
   ));

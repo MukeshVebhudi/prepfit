@@ -219,7 +219,7 @@ a static site and avoid adding a framework unless a later measured need justifie
 - [x] 1. Split the application into focused JavaScript modules
 - [x] 2. Run real-browser journeys in GitHub Actions
 - [x] 3. Expand and validate the recipe catalog
-- [ ] 4. Improve nutrition feedback and customization
+- [x] 4. Improve nutrition feedback and customization
 - [ ] 5. Make groceries more practical
 - [ ] 6. Add direct plan editing and better recovery controls
 - [ ] 7. Add code-quality gates and prepare a verified deployment
@@ -336,6 +336,25 @@ document the resulting coverage before completing the step.
 ```
 
 ### 4. Improve nutrition feedback and customization
+
+Completed September 9, 2026. Target warnings now identify the limiting condition: maximum portions
+with insufficient eligible nutrition, minimum portions with unavoidable excess, conflicting targets
+that pull one shared portion size in different directions, or a catalog combination that remains
+outside tolerance. Missing dietary matches and supplement/exclusion conflicts retain their specific
+messages. Meal macros, daily totals, weekly averages, target fitting, groceries, and restored plans
+continue through the same calculation paths.
+
+Supplement nutrition can now use the documented whey reference or a custom package label. Custom
+settings include product name, daily product weight, protein, calories, carbohydrate, fat, and
+allergen/category tags. Inputs are bounded, zero protein disables all supplement totals, custom
+grocery quantities use the configured name and weight, and exclusions check the custom name and
+tags. Existing saved plans without these fields migrate to the whey-reference defaults. Browser
+coverage verifies exact reload and guest-to-profile conversion of the custom settings.
+
+Fiber and sodium remain intentionally undisplayed: the current ingredient catalog lacks validated
+values for every preparation state. `NUTRITION.md` records this boundary so partial totals are not
+presented as complete. The app shell cache advanced to `v11`. The release suite and desktop/mobile
+Playwright journeys pass with the new settings.
 
 Show users why a target could not be met and which constraint limited the plan. Add useful nutrition
 signals such as fiber and sodium where source data is reliable, and allow supplement nutrition to be

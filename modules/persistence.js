@@ -68,7 +68,7 @@ export function createPersistence({ storage, schemaVersion, mealTypes, recipes, 
           meal.label = mealTypes[mealIndex];
           return meal;
         });
-        return { day: dayIndex + 1, meals, macros: macrosForDay(meals, settings.powderProtein) };
+        return { day: dayIndex + 1, meals, macros: macrosForDay(meals, settings) };
       });
       return { days, missingTypes: savedPlan.missingTypes.filter((type) => mealTypes.includes(type)),
         ...(typeof savedPlan.conflict === "string" ? { conflict: savedPlan.conflict } : {}) };

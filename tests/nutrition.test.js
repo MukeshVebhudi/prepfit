@@ -125,9 +125,26 @@ const shopping = aggregateGroceries(plan.days, 2, 24);
 const shoppingTotals = macrosForMeal(shopping);
 const dayTotals = plan.days.reduce((sum, day) => addMacros(sum, day.macros), emptyMacros());
 for (const key of ['protein', 'calories', 'carbs', 'fat']) near(shoppingTotals[key], dayTotals[key] * 2, 'shopping/day consistency ' + key, 1e-6);
+const customShopping = aggregateGroceries(plan.days, 2, {
+  powderProtein: 25, supplementMode: 'custom', supplementLabel: 'Pea Blend', supplementAmount: 35,
+});
+const customItem = customShopping.find(item => item.name === 'Pea Blend');
+assert.ok(customItem);
+assert.equal(customItem.amount, plan.days.length * 2 * 35);
+assert.match(formatIngredient(customItem, 1), /use product label/);
 const conflict = buildPlan({ ...config, excluded: ['dairy'] });
 assert.equal(conflict.days.length, 0);
 assert.match(buildWarning(conflict, config), /supplemental whey/);
+const customConflictSettings = {
+  ...config, supplementMode: 'custom', supplementLabel: 'Pea Blend', supplementAllergens: 'legumes',
+  excluded: ['legumes'], supplementCalories: 140, supplementCarbs: 4, supplementFat: 2,
+};
+const customConflict = buildPlan(customConflictSettings);
+assert.equal(customConflict.days.length, 0);
+assert.match(buildWarning(customConflict, customConflictSettings), /configured supplement/);
+const impossibleSettings = { ...config, powderProtein: 0, dailyTarget: 1000 };
+const impossiblePlan = buildPlan(impossibleSettings);
+assert.match(buildWarning(impossiblePlan, impossibleSettings), /reached the allowed maximum.*catalog meals cannot supply more/);
 for (const meal of recipeCandidates('Lunch', { ...config, excluded: ['garlic'] })) {
   assert.ok(!meal.ingredients.some(i => i.name.includes('garlic')));
 }

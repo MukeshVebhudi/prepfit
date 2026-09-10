@@ -76,6 +76,28 @@ check("supplement protein is included during fitting and final totals",
   && approx(powderMacros.protein, base.protein + 30, 1));
 check("supplement calories are included in daily macros", powderMacros.calories > base.calories);
 
+const customSupplement = {
+  ...achievable, dailyTarget: base.protein + 25, powderProtein: 25,
+  supplementMode: "custom", supplementCalories: 160, supplementCarbs: 9, supplementFat: 4,
+};
+const customMacros = math.macrosForDay(math.scaleMealsToTargets(meals, customSupplement), customSupplement);
+check("custom supplement label macros replace the whey reference",
+  approx(math.supplementMacros(customSupplement).protein, 25, 0.001)
+  && approx(math.supplementMacros(customSupplement).calories, 160, 0.001)
+  && approx(math.supplementMacros(customSupplement).carbs, 9, 0.001)
+  && approx(math.supplementMacros(customSupplement).fat, 4, 0.001));
+check("custom supplement is included in target fitting",
+  math.targetResults(customMacros, customSupplement)[0].kind === "near");
+const boundedSupplement = math.supplementMacros({
+  powderProtein: 999, supplementMode: "custom", supplementCalories: 9999,
+  supplementCarbs: 999, supplementFat: 999,
+});
+check("custom supplement macros are bounded",
+  boundedSupplement.protein === 140 && boundedSupplement.calories === 1200
+  && boundedSupplement.carbs === 200 && boundedSupplement.fat === 120);
+check("zero protein disables all custom supplement macros",
+  math.supplementMacros({ powderProtein: 0, supplementMode: "custom", supplementCalories: 500 }).calories === 0);
+
 const excessivePowder = { ...achievable, dailyTarget: 40, powderProtein: 140 };
 const lowMeals = math.scaleMealsToTargets(meals, excessivePowder);
 check("food stays at the minimum portion when powder alone exceeds the target",

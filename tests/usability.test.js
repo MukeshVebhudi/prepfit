@@ -14,6 +14,9 @@ assert.match(html, /Skip settings and view plan/);
 assert.match(html, /id="planner-note"[^>]+role="status"[^>]+aria-atomic="true"/);
 assert.match(html, /id="plan-status"[^>]+role="status"[^>]+aria-live="polite"/);
 assert.doesNotMatch(html, /summary-card panel"[^>]+aria-live/);
+assert.match(html, /Customize supplement nutrition/);
+assert.match(html, /name="supplementMode"/);
+assert.match(html, /name="supplementAllergens"/);
 
 assert.match(css, /--focus:\s*#[0-9a-f]{6}/i);
 assert.match(css, /\.jump-link:not\(\[hidden\]\)[\s\S]*position:\s*sticky/);

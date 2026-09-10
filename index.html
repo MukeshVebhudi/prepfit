@@ -90,6 +90,31 @@
               <span>Supplemental whey protein grams/day</span>
               <input id="powder-protein" name="powderProtein" type="number" min="0" max="140" step="5" value="0" />
             </label>
+            <details class="supplement-settings">
+              <summary>Customize supplement nutrition</summary>
+              <label class="field">
+                <span>Supplement calculation</span>
+                <select name="supplementMode">
+                  <option value="reference">PrepFit whey reference</option>
+                  <option value="custom">Custom product label</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Product name</span>
+                <input name="supplementLabel" type="text" maxlength="40" value="Whey protein powder" />
+              </label>
+              <div class="field-grid">
+                <label class="field"><span>Product grams/day</span><input name="supplementAmount" type="number" min="0" max="300" step="1" value="30" /></label>
+                <label class="field"><span>Calories/day</span><input name="supplementCalories" type="number" min="0" max="1200" step="1" value="0" /></label>
+                <label class="field"><span>Carbs/day</span><input name="supplementCarbs" type="number" min="0" max="200" step="0.5" value="0" /></label>
+                <label class="field"><span>Fat/day</span><input name="supplementFat" type="number" min="0" max="120" step="0.5" value="0" /></label>
+              </div>
+              <label class="field">
+                <span>Allergen/category tags</span>
+                <input name="supplementAllergens" type="text" value="dairy" placeholder="dairy, legumes" aria-describedby="supplement-help" />
+              </label>
+              <p id="supplement-help" class="auth-hint">Custom values are daily label totals. Set protein to 0 above to disable the supplement.</p>
+            </details>
           </fieldset>
 
           <fieldset>
