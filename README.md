@@ -6,8 +6,8 @@
 PrepFit is a lightweight meal prep planner that generates high-protein batch cooking plans, macros, grocery lists, prep schedules, favorites, and legible multi-page printouts.
 
 The app is built with plain HTML, CSS, vanilla JavaScript, and a small Java static file server. It
-does not use React, Maven, Gradle, external APIs, or a database. npm is used only for Playwright
-browser tests and is not required to run the app.
+does not use React, Maven, Gradle, external APIs, or a database. npm provides development checks and
+Playwright browser tests but is not required to run the app.
 
 ## Features
 
@@ -52,6 +52,28 @@ Then open:
 ```text
 http://localhost:3000/
 ```
+
+## Quality checks
+
+Install the pinned development tools with `npm ci`, then run:
+
+```bash
+npm test
+npm run format:check
+npm run lint
+npm run coverage
+npm run test:browser
+npm run test:live
+```
+
+`npm run release` runs formatting, lint, static-reference validation, the release tests, and coverage.
+Coverage is reported for `plan-math.js`, whose direct Node tests provide accurate source mapping,
+without enforcing an arbitrary percentage gate. Module and browser behavior remains covered by the
+VM integration tests and Playwright journey.
+
+`npm run test:live` verifies the deployed GitHub Pages PWA at
+`https://mukeshvebhudi.github.io/prepfit/`, including its subdirectory scope, manifest, service
+worker, saved settings, and offline relaunch. Run it after Pages finishes deploying from `main`.
 
 ## Android Web App
 
