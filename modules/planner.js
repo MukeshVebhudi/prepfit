@@ -8,7 +8,6 @@ export function createPlanner({
   scaleMealsToTargets,
   macrosForDay,
   targetFitScore,
-  supplementalPowderIngredient,
   averageMacros,
   portionLimits,
   targetResults,

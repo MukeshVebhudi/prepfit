@@ -158,7 +158,7 @@ export function createPersistence({
         missingTypes: savedPlan.missingTypes.filter((type) => mealTypes.includes(type)),
         ...(typeof savedPlan.conflict === "string" ? { conflict: savedPlan.conflict } : {}),
       };
-    } catch (error) {
+    } catch {
       return null;
     }
   }

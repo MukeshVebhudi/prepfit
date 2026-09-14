@@ -341,7 +341,7 @@ function validateRecipeIngredients(recipes) {
         if (!CATEGORY_BY_INGREDIENT[ingredient.name]) missingCategory.add(ingredient.name);
         try {
           ingredientGrams(ingredient);
-        } catch (error) {
+        } catch {
           invalidUnits.add(`${recipe.name}: ${ingredient.name}/${ingredient.unit}`);
         }
       });
@@ -962,7 +962,6 @@ function cuisineRecipe(label, cuisine, proteinType, template, profile) {
     `${style} ${proteinLabel} ${profile.format}`,
     ingredients,
     cookingSteps({
-      cuisine,
       proteinType,
       proteinLabel,
       carbName,
@@ -974,19 +973,11 @@ function cuisineRecipe(label, cuisine, proteinType, template, profile) {
   );
 }
 
-function cookingSteps({
-  cuisine,
-  proteinType,
-  proteinLabel,
-  carbName,
-  produceName,
-  sauceName,
-  format,
-}) {
+function cookingSteps({ proteinType, proteinLabel, carbName, produceName, sauceName, format }) {
   return [
     carbStep(carbName),
     produceStep(produceName),
-    proteinStep(proteinType, proteinLabel, cuisine, sauceName),
+    proteinStep(proteinType),
     sauceStep(sauceName),
     `Build each ${format.toLowerCase()} with the carb base first, then ${produceName}, then the cooked ${proteinLabel.toLowerCase()} component.`,
     "Use only the listed ingredients plus water. Added oil, butter, toppings, or seasonings are optional extras outside the nutrition estimate and may conflict with your exclusions.",
@@ -1018,7 +1009,7 @@ function produceStep(name) {
   return `Measure ${name} raw as listed, then steam or cook in a nonstick pan with water until tender-crisp.`;
 }
 
-function proteinStep(type, label, cuisine, sauceName) {
+function proteinStep(type) {
   if (type === "chicken")
     return "Cook chicken without extra oil to 165 F, rest, then weigh the listed cooked meat quantity. Raw purchase weight will vary with cooking yield.";
   if (type === "beef")

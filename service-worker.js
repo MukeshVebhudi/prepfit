@@ -63,7 +63,7 @@ async function networkFirstPage(request) {
     const response = await fetch(request);
     if (response.ok && response.type !== "opaque") await cache.put(request, response.clone());
     return response;
-  } catch (error) {
+  } catch {
     const cached = await cache.match(request);
     const fallback = await cache.match(FALLBACK_URL);
     return cached || fallback || Response.error();

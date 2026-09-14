@@ -9,7 +9,7 @@ export function createExporter({
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
-    } catch (error) {
+    } catch {
       const textarea = document.createElement("textarea");
       textarea.value = text;
       textarea.setAttribute("readonly", "");

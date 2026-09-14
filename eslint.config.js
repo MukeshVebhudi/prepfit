@@ -82,14 +82,22 @@ module.exports = [
       "no-unsafe-finally": "error",
       "no-unsafe-negation": "error",
       "no-unsafe-optional-chaining": "error",
+      "no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
       "no-unused-labels": "error",
       "no-useless-backreference": "error",
       "no-useless-catch": "error",
       "no-useless-escape": "error",
       "no-with": "error",
+      eqeqeq: ["error", "always"],
       "require-yield": "error",
       "use-isnan": "error",
       "valid-typeof": "error",
+    },
+  },
+  {
+    files: ["app.js", "modules/*.js"],
+    rules: {
+      complexity: ["error", 20],
     },
   },
   {

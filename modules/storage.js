@@ -1,7 +1,7 @@
 export function parseJson(value) {
   try {
     return value ? JSON.parse(value) : null;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
