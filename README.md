@@ -214,14 +214,16 @@ Current status is recorded as reproducible checks rather than a numeric self-ass
 
 - The deployed GitHub Pages app opens in desktop Chrome at
   `https://mukeshvebhudi.github.io/prepfit/` after deployment.
-- The generated Android wrapper builds a debug APK locally.
+- The generated Android wrapper builds both a release-signed APK and an Android App Bundle locally.
+- Android `apksigner` verifies the APK with v1, v2, and v3 signatures and confirms the certificate
+  SHA-256 digest recorded in `.well-known/assetlinks.json`.
 
 **Outstanding:**
 
 - Install and launch the deployed PWA offline on a physical Android device.
-- Create and protect a production signing key; record its SHA-256 certificate fingerprint in
-  `.well-known/assetlinks.json` without committing the keystore.
-- Build and device-test a release-signed Android package, then complete Play Console validation and
+- Back up the production signing keystore and its password in an owner-controlled secure location;
+  neither file is tracked by Git.
+- Device-test the release-signed Android package, then complete Play Console validation and
   publishing with the owner's account.
 - Treat nutrition values as planning estimates based on documented references, not medical advice
   or a substitute for packaged-food labels.
@@ -232,7 +234,8 @@ Current status is recorded as reproducible checks rather than a numeric self-ass
 - [x] 1. Expand the formatting gate to runtime and data sources
 - [x] 2. Strengthen runtime lint rules
 - [x] 3. Replace numeric self-grading with falsifiable release status
-- [ ] 4. Close Android signing and physical-device verification
+- [ ] 4. Close Android signing and physical-device verification (signing complete; device test blocked
+  because no phone is connected)
 - [ ] 5. Decompose large rendering templates without output changes
 - [ ] 6. Add the corrupted-storage test matrix
 - [ ] 7. Record nutrition data provenance per ingredient
@@ -507,9 +510,9 @@ seven-day coverage artifact, and runs Chromium only after the faster quality job
 Pull request #2 deployed the verified application from `main` to
 `https://mukeshvebhudi.github.io/prepfit/`. GitHub Pages build `34446561101` passed, and the live
 Playwright check passed the `/prepfit/` URL boundary, relative manifest identity/start/scope,
-scoped service-worker controller, saved-setting reload, and offline relaunch. Remaining Android work
-requires the owner to create and protect a signing key, replace the Digital Asset Links fingerprint,
-test installation on a physical device, and publish through Play Console.
+scoped service-worker controller, saved-setting reload, and offline relaunch. A release signing key
+and matching Digital Asset Links fingerprint were added September 14, 2026; physical-device and Play
+Console verification remain outstanding.
 
 Add lightweight formatting, linting, coverage reporting, and static-document validation. Then deploy
 the PWA to its intended HTTPS subdirectory and verify the live installation boundary. Android signing
@@ -529,9 +532,8 @@ pinned formatting, linting, coverage reporting, and static HTML/manifest/asset
 validation to the release command and GitHub Actions. Fix actionable findings.
 Prepare and verify deployment at the intended HTTPS subdirectory, including live
 manifest paths, service-worker updates, offline launch, and saved-data persistence.
-Do not create signing keys, publish to Google Play, or replace owner credentials.
-Record CI and live-site evidence, remaining Android work, and an updated codebase
-and release-readiness rating.
+Keep signing keys and owner credentials outside Git, and do not publish to Google Play without the
+owner's explicit release approval. Record CI and live-site evidence plus remaining Android work.
 ```
 
 ## Publish to Google Play
@@ -555,15 +557,17 @@ can be automated here).
    ```bash
    npx @bubblewrap/cli build
    ```
-   This creates a release keystore (back it up — losing it means you can't update the app later) and
-   produces an `app-release-bundle.aab`.
+   The local wrapper uses the untracked `android.keystore` alias `prepfit` and produces
+   `app-release-signed.apk` plus `app-release-bundle.aab`. Back up the keystore and password; losing
+   them prevents signing future updates with the same identity.
 4. **Verify domain ownership.** Get the release key's SHA-256 fingerprint:
    ```bash
-   keytool -list -v -keystore android.keystore -alias android
+   keytool -list -v -keystore android.keystore -alias prepfit
    ```
-   Put it into `.well-known/assetlinks.json` in this repo (a placeholder is already checked in),
-   replacing `PLACEHOLDER_SHA256_FINGERPRINT`, then redeploy so it's live at
-   `https://mukeshvebhudi.github.io/prepfit/.well-known/assetlinks.json`. Without this file matching,
-   the installed app shows browser UI instead of a full-screen native experience.
+   The checked-in association uses package `com.mukeshvebhudi.prepfit` and the production
+   certificate's SHA-256 fingerprint. Redeploy it so the matching file is live at
+   `https://mukeshvebhudi.github.io/prepfit/.well-known/assetlinks.json`. If the package or
+   certificate differs, the installed app shows browser UI instead of a full-screen native
+   experience.
 5. **Upload to Play Console.** Create an app listing at [play.google.com/console](https://play.google.com/console)
    and upload the `.aab` from step 3. This step requires your own developer account.
