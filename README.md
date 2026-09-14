@@ -196,24 +196,48 @@ every push and pull request. The production app still has no npm package or buil
 
 ## Release readiness
 
-**Codebase rating: 9.2/10. Web release readiness: 9.5/10 — deployed and verified for public beta.**
+Current status is recorded as reproducible checks rather than a numeric self-assessment.
 
-The September 10, 2026 release suite passes locally and in GitHub Actions. It covers all original repair areas: mandatory
-dietary filtering, unit-aware nutrition, multi-target planning, exact persistence, local-profile
-migration, scoped offline caching, accessibility structure, food-safety copy, and the Java server.
-A headless Chromium journey also passes guest entry, vegetarian and ingredient exclusions,
-generation, swap, favorite, grocery checkoff, reload, guest conversion, offline revisit, text
-download, and print. The deployed PWA at `https://mukeshvebhudi.github.io/prepfit/` passes its live
-HTTPS subdirectory, manifest, service-worker scope, storage persistence, and offline-launch test.
+**Test-verified:**
 
-Before calling the Android wrapper or nutrition experience production-ready:
+- `bash scripts/check.sh` covers mandatory dietary filtering, unit-aware nutrition, multi-target
+  planning, exact persistence, local-profile migration, scoped offline caching, structural
+  accessibility checks, food-safety copy, and the Java server.
+- `npm run test:browser` covers guest entry, restrictions, generation, direct meal editing,
+  groceries, reload, profile conversion, download, print preparation, mobile overflow, and an
+  offline revisit in Chromium.
+- `npm run test:live` covers the deployed HTTPS subdirectory, manifest identity and scope,
+  service-worker control, saved-setting reload, and offline relaunch.
+- GitHub Actions runs the release and Chromium suites for pull requests and `main`.
 
-- Test installation and an offline launch on a physical Android device.
-- Replace the Digital Asset Links signing fingerprint placeholder before building a Trusted Web
-  Activity.
-- Treat nutrition as planning estimates based on the documented references, not medical advice or
-  a substitute for packaged-food labels.
-- Remember that profiles are local browser organization without authentication, backup, or sync.
+**Manually verified:**
+
+- The deployed GitHub Pages app opens in desktop Chrome at
+  `https://mukeshvebhudi.github.io/prepfit/` after deployment.
+- The generated Android wrapper builds a debug APK locally.
+
+**Outstanding:**
+
+- Install and launch the deployed PWA offline on a physical Android device.
+- Create and protect a production signing key; record its SHA-256 certificate fingerprint in
+  `.well-known/assetlinks.json` without committing the keystore.
+- Build and device-test a release-signed Android package, then complete Play Console validation and
+  publishing with the owner's account.
+- Treat nutrition values as planning estimates based on documented references, not medical advice
+  or a substitute for packaged-food labels.
+- Profiles remain local browser organization without authentication, backup, or sync.
+
+### External review progress
+
+- [x] 1. Expand the formatting gate to runtime and data sources
+- [x] 2. Strengthen runtime lint rules
+- [x] 3. Replace numeric self-grading with falsifiable release status
+- [ ] 4. Close Android signing and physical-device verification
+- [ ] 5. Decompose large rendering templates without output changes
+- [ ] 6. Add the corrupted-storage test matrix
+- [ ] 7. Record nutrition data provenance per ingredient
+- [ ] 8. Add a privacy-respecting local diagnostic export
+- [ ] 9. Run automated axe accessibility audits and resolve findings
 
 Manual browser checklist for future releases:
 
