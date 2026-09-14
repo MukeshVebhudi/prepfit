@@ -80,6 +80,37 @@ export function createRenderer({
       .join("");
   }
 
+  function removedMeal(meal, dayIndex, mealIndex) {
+    return `<article class="meal-card removed-meal"><p class="meal-kicker">${escapeHtml(meal.label)}</p><h3>Meal removed</h3><p class="auth-hint">Restore ${escapeHtml(meal.name)} to add its nutrition and groceries back.</p><div class="meal-actions"><button class="icon-button" type="button" data-action="restore" data-day="${dayIndex}" data-meal="${mealIndex}">Restore meal</button></div></article>`;
+  }
+
+  function mealHeader(meal, dayIndex, mealIndex) {
+    const source = proteins[meal.proteinType]?.source || "mixed protein";
+    return `<div class="meal-top"><div class="meal-icon" aria-hidden="true">${meal.label.charAt(0)}</div><div>
+      <p class="meal-kicker">${escapeHtml(meal.label)} · ${escapeHtml(cuisines[meal.cuisine] || "Classic")}</p><h3>${escapeHtml(meal.name)}</h3><small>${escapeHtml(source)}</small></div>
+      <button class="icon-button meal-quick-action" type="button" data-action="swap" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Swap ${escapeAttr(meal.label)} ${escapeAttr(meal.name)}">Swap dish</button></div>`;
+  }
+
+  function mealNutrition(meal) {
+    return `<p class="auth-hint">Estimated nutrition per serving; ingredient quantities below cover all listed servings.</p>
+      <div class="badge-row" aria-label="Meal macros"><span class="badge protein">${Math.round(meal.macros.protein)}g protein</span><span class="badge calories">${Math.round(meal.macros.calories)} kcal</span><span class="badge carb">${Math.round(meal.macros.carbs)}g carbs</span><span class="badge fat">${Math.round(meal.macros.fat)}g fat</span></div>`;
+  }
+
+  function mealRecipeBody(meal, servings, servingLabel) {
+    return `<details class="recipe-details"><summary><span>View recipe</span><small>Ingredients &amp; prep</small></summary>
+      <div class="recipe-details-body"><div class="meal-section"><p class="meal-kicker">Ingredients for ${servings} ${servingLabel}</p><ul>${meal.ingredients.map((item) => `<li>${escapeHtml(formatIngredient(item, servings))}</li>`).join("")}</ul></div>
+      <div class="meal-section"><p class="meal-kicker">Prep</p><ol>${meal.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ol></div></div></details>`;
+  }
+
+  function mealActions(meal, dayIndex, mealIndex) {
+    const favorites = getFavorites();
+    return `<div class="meal-actions"><button class="icon-button" type="button" data-action="favorite" data-name="${escapeAttr(meal.name)}" aria-label="${favorites.has(meal.name) ? "Remove" : "Save"} ${escapeAttr(meal.name)} ${favorites.has(meal.name) ? "from" : "to"} favorites" aria-pressed="${favorites.has(meal.name)}">${favorites.has(meal.name) ? "Saved" : "Save"}</button>
+      <button class="icon-button" type="button" data-action="portion-down" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Decrease ${escapeAttr(meal.name)} portion">− Portion</button>
+      <span class="portion-value" aria-label="Current portion">${Math.round((meal.portionRatio || 1) * 100)}%</span>
+      <button class="icon-button" type="button" data-action="portion-up" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Increase ${escapeAttr(meal.name)} portion">+ Portion</button>
+      <button class="icon-button danger-button" type="button" data-action="remove" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Remove ${escapeAttr(meal.label)} ${escapeAttr(meal.name)}">Remove</button></div>`;
+  }
+
   function renderMeal(
     meal,
     dayIndex,
@@ -87,23 +118,34 @@ export function createRenderer({
     servings,
     servingLabel = servings === 1 ? "person" : "people",
   ) {
-    const favorites = getFavorites();
-    if (meal.removed)
-      return `<article class="meal-card removed-meal"><p class="meal-kicker">${escapeHtml(meal.label)}</p><h3>Meal removed</h3><p class="auth-hint">Restore ${escapeHtml(meal.name)} to add its nutrition and groceries back.</p><div class="meal-actions"><button class="icon-button" type="button" data-action="restore" data-day="${dayIndex}" data-meal="${mealIndex}">Restore meal</button></div></article>`;
-    const source = proteins[meal.proteinType]?.source || "mixed protein";
-    return `<article class="meal-card"><div class="meal-top"><div class="meal-icon" aria-hidden="true">${meal.label.charAt(0)}</div><div>
-      <p class="meal-kicker">${escapeHtml(meal.label)} · ${escapeHtml(cuisines[meal.cuisine] || "Classic")}</p><h3>${escapeHtml(meal.name)}</h3><small>${escapeHtml(source)}</small></div>
-      <button class="icon-button meal-quick-action" type="button" data-action="swap" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Swap ${escapeAttr(meal.label)} ${escapeAttr(meal.name)}">Swap dish</button></div>
-      <p class="auth-hint">Estimated nutrition per serving; ingredient quantities below cover all listed servings.</p>
-      <div class="badge-row" aria-label="Meal macros"><span class="badge protein">${Math.round(meal.macros.protein)}g protein</span><span class="badge calories">${Math.round(meal.macros.calories)} kcal</span><span class="badge carb">${Math.round(meal.macros.carbs)}g carbs</span><span class="badge fat">${Math.round(meal.macros.fat)}g fat</span></div>
-      <details class="recipe-details"><summary><span>View recipe</span><small>Ingredients &amp; prep</small></summary>
-      <div class="recipe-details-body"><div class="meal-section"><p class="meal-kicker">Ingredients for ${servings} ${servingLabel}</p><ul>${meal.ingredients.map((item) => `<li>${escapeHtml(formatIngredient(item, servings))}</li>`).join("")}</ul></div>
-      <div class="meal-section"><p class="meal-kicker">Prep</p><ol>${meal.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ol></div></div></details>
-      <div class="meal-actions"><button class="icon-button" type="button" data-action="favorite" data-name="${escapeAttr(meal.name)}" aria-label="${favorites.has(meal.name) ? "Remove" : "Save"} ${escapeAttr(meal.name)} ${favorites.has(meal.name) ? "from" : "to"} favorites" aria-pressed="${favorites.has(meal.name)}">${favorites.has(meal.name) ? "Saved" : "Save"}</button>
-      <button class="icon-button" type="button" data-action="portion-down" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Decrease ${escapeAttr(meal.name)} portion">− Portion</button>
-      <span class="portion-value" aria-label="Current portion">${Math.round((meal.portionRatio || 1) * 100)}%</span>
-      <button class="icon-button" type="button" data-action="portion-up" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Increase ${escapeAttr(meal.name)} portion">+ Portion</button>
-      <button class="icon-button danger-button" type="button" data-action="remove" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Remove ${escapeAttr(meal.label)} ${escapeAttr(meal.name)}">Remove</button></div></article>`;
+    if (meal.removed) return removedMeal(meal, dayIndex, mealIndex);
+    return `<article class="meal-card">${mealHeader(meal, dayIndex, mealIndex)}
+      ${mealNutrition(meal)}
+      ${mealRecipeBody(meal, servings, servingLabel)}
+      ${mealActions(meal, dayIndex, mealIndex)}</article>`;
+  }
+
+  function mealGrid(day, dayIndex, servings, servingLabel) {
+    return `<div class="meal-grid">${day.meals
+      .map((meal, index) => renderMeal(meal, dayIndex, index, servings, servingLabel))
+      .join("")}</div>`;
+  }
+
+  function batchDayHeader(day, settings, servings) {
+    return `<div class="day-header"><div><p class="eyebrow">Batch cook set</p><h3>${Math.round(day.macros.protein)}g protein/day · ${Math.round(day.macros.calories)} calories/day</h3><p>Cook once for ${settings.days} ${plural("day", settings.days)} and portion ${servings * 3} total meals.</p></div><div class="badge-row"><span class="badge protein">${servings} ${plural("serving", servings)}</span><span class="badge calories">${settings.budget.replace("-", " ")}</span></div></div>`;
+  }
+
+  function varietyDayHeader(day, settings) {
+    return `<div class="day-header"><div><p class="eyebrow">Day ${day.day}</p><h3>${Math.round(day.macros.protein)}g protein · ${Math.round(day.macros.calories)} calories</h3><p>Unique daily set</p></div><div class="badge-row"><span class="badge protein">${settings.people} ${plural("person", settings.people)}</span><span class="badge calories">${settings.budget.replace("-", " ")}</span></div></div>`;
+  }
+
+  function batchDay(day, settings) {
+    const servings = settings.people * settings.days;
+    return `<article class="day-card">${batchDayHeader(day, settings, servings)}${mealGrid(day, 0, servings, "batch servings")}</article>`;
+  }
+
+  function varietyDay(day, dayIndex, settings) {
+    return `<article class="day-card">${varietyDayHeader(day, settings)}${mealGrid(day, dayIndex, settings.people)}</article>`;
   }
 
   function renderMeals(plan, settings) {
@@ -113,16 +155,28 @@ export function createRenderer({
     }
     if (settings.mealMode === "batch") {
       const day = plan.days[0];
-      const servings = settings.people * settings.days;
-      dom.mealPlan.innerHTML = `<article class="day-card"><div class="day-header"><div><p class="eyebrow">Batch cook set</p><h3>${Math.round(day.macros.protein)}g protein/day · ${Math.round(day.macros.calories)} calories/day</h3><p>Cook once for ${settings.days} ${plural("day", settings.days)} and portion ${servings * 3} total meals.</p></div><div class="badge-row"><span class="badge protein">${servings} ${plural("serving", servings)}</span><span class="badge calories">${settings.budget.replace("-", " ")}</span></div></div><div class="meal-grid">${day.meals.map((meal, index) => renderMeal(meal, 0, index, servings, "batch servings")).join("")}</div></article>`;
+      dom.mealPlan.innerHTML = batchDay(day, settings);
       return;
     }
     dom.mealPlan.innerHTML = plan.days
-      .map(
-        (day, dayIndex) =>
-          `<article class="day-card"><div class="day-header"><div><p class="eyebrow">Day ${day.day}</p><h3>${Math.round(day.macros.protein)}g protein · ${Math.round(day.macros.calories)} calories</h3><p>Unique daily set</p></div><div class="badge-row"><span class="badge protein">${settings.people} ${plural("person", settings.people)}</span><span class="badge calories">${settings.budget.replace("-", " ")}</span></div></div><div class="meal-grid">${day.meals.map((meal, index) => renderMeal(meal, dayIndex, index, settings.people)).join("")}</div></article>`,
-      )
+      .map((day, dayIndex) => varietyDay(day, dayIndex, settings))
       .join("");
+  }
+
+  function groceryItem(item, purchases, pantry) {
+    const key = groceryItemKey(item);
+    const checked = purchases.get(key) === groceryQuantitySignature(item);
+    const inPantry = pantry.has(key);
+    const manualActions = item.manual
+      ? `<button class="link-button" type="button" data-grocery-action="edit" data-manual-id="${escapeAttr(item.id)}">Edit</button><button class="link-button" type="button" data-grocery-action="remove" data-manual-id="${escapeAttr(item.id)}">Remove</button>`
+      : "";
+    return `<li class="${inPantry ? "is-pantry" : ""}"><label><input type="checkbox" data-grocery-key="${escapeAttr(key)}" ${checked ? "checked" : ""} aria-label="Mark ${escapeAttr(item.name)} purchased" /><span><strong>${escapeHtml(formatIngredient(item, 1))}</strong><small>${escapeHtml(marketHint(item))}</small></span></label><div class="grocery-item-actions"><label><input type="checkbox" data-pantry-key="${escapeAttr(key)}" ${inPantry ? "checked" : ""} /> In pantry</label>${manualActions}</div></li>`;
+  }
+
+  function groceryCategory(category, items, purchases, pantry) {
+    return `<section class="grocery-category"><h3>${category}<span class="badge">${items.length}</span></h3><ul>${items
+      .map((item) => groceryItem(item, purchases, pantry))
+      .join("")}</ul></section>`;
   }
 
   function renderGroceries(groceries) {
@@ -135,19 +189,7 @@ export function createRenderer({
     const pantry = getPantry();
     dom.groceryList.innerHTML = categories
       .filter((category) => groups[category]?.length)
-      .map(
-        (category) =>
-          `<section class="grocery-category"><h3>${category}<span class="badge">${groups[category].length}</span></h3><ul>${groups[
-            category
-          ]
-            .map((item) => {
-              const key = groceryItemKey(item);
-              const checked = purchases.get(key) === groceryQuantitySignature(item);
-              const inPantry = pantry.has(key);
-              return `<li class="${inPantry ? "is-pantry" : ""}"><label><input type="checkbox" data-grocery-key="${escapeAttr(key)}" ${checked ? "checked" : ""} aria-label="Mark ${escapeAttr(item.name)} purchased" /><span><strong>${escapeHtml(formatIngredient(item, 1))}</strong><small>${escapeHtml(marketHint(item))}</small></span></label><div class="grocery-item-actions"><label><input type="checkbox" data-pantry-key="${escapeAttr(key)}" ${inPantry ? "checked" : ""} /> In pantry</label>${item.manual ? `<button class="link-button" type="button" data-grocery-action="edit" data-manual-id="${escapeAttr(item.id)}">Edit</button><button class="link-button" type="button" data-grocery-action="remove" data-manual-id="${escapeAttr(item.id)}">Remove</button>` : ""}</div></li>`;
-            })
-            .join("")}</ul></section>`,
-      )
+      .map((category) => groceryCategory(category, groups[category], purchases, pantry))
       .join("");
   }
 

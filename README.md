@@ -236,11 +236,15 @@ Current status is recorded as reproducible checks rather than a numeric self-ass
 - [x] 3. Replace numeric self-grading with falsifiable release status
 - [ ] 4. Close Android signing and physical-device verification (signing complete; device test blocked
   because no phone is connected)
-- [ ] 5. Decompose large rendering templates without output changes
+- [x] 5. Decompose large rendering templates without output changes
 - [ ] 6. Add the corrupted-storage test matrix
 - [ ] 7. Record nutrition data provenance per ingredient
 - [ ] 8. Add a privacy-respecting local diagnostic export
 - [ ] 9. Run automated axe accessibility audits and resolve findings
+
+Step 5 split meal headers, nutrition, recipe bodies, actions, day cards, grocery categories, and
+grocery rows into named rendering helpers. A deterministic pre/post Chromium comparison produced
+identical meal-plan and grocery-list HTML, followed by the complete release and browser suites.
 
 Manual browser checklist for future releases:
 
