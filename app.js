@@ -248,6 +248,22 @@ function bindEvents() {
   dom.logoutAccount.addEventListener("click", logoutAccount);
   dom.guestStart.addEventListener("click", startGuestSession);
   dom.guestUpgrade.addEventListener("click", beginGuestConversion);
+  window.addEventListener("beforeprint", openRecipeDetailsForPrint);
+  window.addEventListener("afterprint", restoreRecipeDetailsAfterPrint);
+}
+
+function openRecipeDetailsForPrint() {
+  document.querySelectorAll(".recipe-details:not([open])").forEach((details) => {
+    details.dataset.openedForPrint = "true";
+    details.open = true;
+  });
+}
+
+function restoreRecipeDetailsAfterPrint() {
+  document.querySelectorAll('.recipe-details[data-opened-for-print="true"]').forEach((details) => {
+    details.open = false;
+    delete details.dataset.openedForPrint;
+  });
 }
 
 function restoreSession() {

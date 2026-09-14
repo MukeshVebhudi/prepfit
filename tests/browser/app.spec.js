@@ -28,6 +28,11 @@ test("complete planning journey persists and works offline", async ({ page, cont
   await page.goto("/");
   await page.getByRole("button", { name: "Continue as guest" }).click();
   await expect(page.locator("#meal-plan .meal-card").first()).toBeVisible();
+  const firstRecipeDetails = page.locator("#meal-plan .meal-card").first().locator(".recipe-details");
+  await expect(firstRecipeDetails).not.toHaveAttribute("open", "");
+  await expect(firstRecipeDetails.locator(".recipe-details-body")).toBeHidden();
+  await firstRecipeDetails.locator("summary").click();
+  await expect(firstRecipeDetails.locator(".recipe-details-body")).toBeVisible();
 
   await page.getByText("Customize supplement nutrition", { exact: true }).click();
   await page.locator('[name="supplementMode"]').selectOption("custom");
@@ -118,12 +123,16 @@ test("complete planning journey persists and works offline", async ({ page, cont
   expect((await fileSystem.stat(downloadPath)).size).toBeGreaterThan(100);
   expect(await fileSystem.readFile(downloadPath, "utf8")).toContain("[pantry] 3 bags Coffee beans");
 
+  await page.evaluate(() => dispatchEvent(new Event("beforeprint")));
   await page.emulateMedia({ media: "print" });
   await expect(manualRow).toBeVisible();
   await expect(manualRow.getByLabel("In pantry")).toBeChecked();
   await expect(cards.first().locator(".meal-actions")).toBeHidden();
+  await expect(cards.nth(1).locator(".recipe-details-body")).toBeVisible();
   expect(await page.evaluate(() => matchMedia("print").matches)).toBe(true);
   await page.emulateMedia({ media: "screen" });
+  await page.evaluate(() => dispatchEvent(new Event("afterprint")));
+  await expect(cards.nth(1).locator(".recipe-details")).not.toHaveAttribute("open", "");
 
   manualRow = page.locator("#grocery-list li", { hasText: "Coffee beans" });
   await manualRow.getByRole("button", { name: "Remove" }).click();
@@ -150,10 +159,10 @@ test("mobile layout exposes the plan shortcut without horizontal overflow", asyn
   await expect(quickSwap).toBeVisible();
   const originalMeal = await firstCard.locator("h3").innerText();
   const swapBox = await quickSwap.boundingBox();
-  const ingredientsBox = await firstCard.locator(".meal-section").first().boundingBox();
+  const recipeDetailsBox = await firstCard.locator(".recipe-details").boundingBox();
   expect(swapBox).not.toBeNull();
-  expect(ingredientsBox).not.toBeNull();
-  expect(swapBox.y).toBeLessThan(ingredientsBox.y);
+  expect(recipeDetailsBox).not.toBeNull();
+  expect(swapBox.y).toBeLessThan(recipeDetailsBox.y);
   await quickSwap.click();
   await expect(firstCard.locator("h3")).not.toHaveText(originalMeal);
   await expect(firstCard.getByRole("button", { name: /^Swap/ })).toBeInViewport();

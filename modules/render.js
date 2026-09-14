@@ -40,8 +40,9 @@ export function createRenderer({ dom, cuisines, categories, proteins, categoryBy
       <button class="icon-button meal-quick-action" type="button" data-action="swap" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Swap ${escapeAttr(meal.label)} ${escapeAttr(meal.name)}">Swap dish</button></div>
       <p class="auth-hint">Estimated nutrition per serving; ingredient quantities below cover all listed servings.</p>
       <div class="badge-row" aria-label="Meal macros"><span class="badge protein">${Math.round(meal.macros.protein)}g protein</span><span class="badge calories">${Math.round(meal.macros.calories)} kcal</span><span class="badge carb">${Math.round(meal.macros.carbs)}g carbs</span><span class="badge fat">${Math.round(meal.macros.fat)}g fat</span></div>
-      <div class="meal-section"><p class="meal-kicker">Ingredients for ${servings} ${servingLabel}</p><ul>${meal.ingredients.map((item) => `<li>${escapeHtml(formatIngredient(item, servings))}</li>`).join("")}</ul></div>
-      <div class="meal-section"><p class="meal-kicker">Prep</p><ol>${meal.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ol></div>
+      <details class="recipe-details"><summary><span>View recipe</span><small>Ingredients &amp; prep</small></summary>
+      <div class="recipe-details-body"><div class="meal-section"><p class="meal-kicker">Ingredients for ${servings} ${servingLabel}</p><ul>${meal.ingredients.map((item) => `<li>${escapeHtml(formatIngredient(item, servings))}</li>`).join("")}</ul></div>
+      <div class="meal-section"><p class="meal-kicker">Prep</p><ol>${meal.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ol></div></div></details>
       <div class="meal-actions"><button class="icon-button" type="button" data-action="favorite" data-name="${escapeAttr(meal.name)}" aria-label="${favorites.has(meal.name) ? "Remove" : "Save"} ${escapeAttr(meal.name)} ${favorites.has(meal.name) ? "from" : "to"} favorites" aria-pressed="${favorites.has(meal.name)}">${favorites.has(meal.name) ? "Saved" : "Save"}</button>
       <button class="icon-button" type="button" data-action="portion-down" data-day="${dayIndex}" data-meal="${mealIndex}" aria-label="Decrease ${escapeAttr(meal.name)} portion">− Portion</button>
       <span class="portion-value" aria-label="Current portion">${Math.round((meal.portionRatio || 1) * 100)}%</span>
