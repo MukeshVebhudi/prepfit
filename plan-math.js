@@ -29,8 +29,13 @@ function proteinInputBounds(goalMode, days) {
 
 function normalizedProteinGoal(value, goalMode, days, fallback = 150) {
   const bounds = proteinInputBounds(goalMode, days);
-  const fallbackForMode = goalMode === "weekly" ? fallback * integerInRange(days, 1, 1, 7) : fallback;
-  return clamp(Number.isFinite(Number(value)) ? Number(value) : fallbackForMode, bounds.min, bounds.max);
+  const fallbackForMode =
+    goalMode === "weekly" ? fallback * integerInRange(days, 1, 1, 7) : fallback;
+  return clamp(
+    Number.isFinite(Number(value)) ? Number(value) : fallbackForMode,
+    bounds.min,
+    bounds.max,
+  );
 }
 
 function roundAmount(value) {
@@ -47,7 +52,8 @@ function cloneRecipe(recipe) {
 }
 
 function scaleMeal(meal, ratio) {
-  if (!Number.isFinite(ratio) || ratio <= 0) throw new Error("Meal scale must be positive and finite");
+  if (!Number.isFinite(ratio) || ratio <= 0)
+    throw new Error("Meal scale must be positive and finite");
   const scaled = cloneRecipe(meal);
   scaled.ingredients = scaled.ingredients.map((ingredient) => ({
     ...ingredient,
@@ -84,7 +90,15 @@ function targetResults(actual, settings) {
     const delta = actual[nutrient] - target;
     const tolerance = targetTolerance(nutrient, target);
     const kind = Math.abs(delta) <= tolerance ? "near" : delta < 0 ? "under" : "over";
-    return { nutrient, actual: actual[nutrient], target, delta, tolerance, kind, unit: TARGET_SPECS[nutrient].unit };
+    return {
+      nutrient,
+      actual: actual[nutrient],
+      target,
+      delta,
+      tolerance,
+      kind,
+      unit: TARGET_SPECS[nutrient].unit,
+    };
   });
 }
 
@@ -96,7 +110,8 @@ function targetFitScore(actual, settings) {
 }
 
 function supplementMacros(supplement) {
-  const settings = typeof supplement === "number" ? { powderProtein: supplement } : (supplement || {});
+  const settings =
+    typeof supplement === "number" ? { powderProtein: supplement } : supplement || {};
   const protein = clamp(Number(settings.powderProtein) || 0, 0, 140);
   if (protein === 0) return emptyMacros();
   if (settings.supplementMode === "custom") {
@@ -157,9 +172,26 @@ function averageMacros(days) {
 
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
-    PORTION_LIMITS, TARGET_SPECS, clamp, integerInRange, proteinInputBounds,
-    normalizedProteinGoal, roundAmount, cloneRecipe, scaleMeal, normalizeMealPortion,
-    portionLimits, requestedTargets, targetTolerance, targetResults, targetFitScore,
-    bestPortionRatio, scaleMealsToTargets, sumMacros, supplementMacros, macrosForDay, averageMacros,
+    PORTION_LIMITS,
+    TARGET_SPECS,
+    clamp,
+    integerInRange,
+    proteinInputBounds,
+    normalizedProteinGoal,
+    roundAmount,
+    cloneRecipe,
+    scaleMeal,
+    normalizeMealPortion,
+    portionLimits,
+    requestedTargets,
+    targetTolerance,
+    targetResults,
+    targetFitScore,
+    bestPortionRatio,
+    scaleMealsToTargets,
+    sumMacros,
+    supplementMacros,
+    macrosForDay,
+    averageMacros,
   };
 }

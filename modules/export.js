@@ -25,12 +25,18 @@ export function createExporter({
   }
 
   function planText(plan, groceryText) {
-    const days = plan.days.map((day) => {
-      const meals = day.meals.map((meal) => meal.removed
-        ? `  ${meal.label}: Removed`
-        : `  ${meal.label}: ${meal.name} (${Math.round(meal.macros.protein)}g protein)`).join("\n");
-      return `Day ${day.day}\n${meals}`;
-    }).join("\n\n");
+    const days = plan.days
+      .map((day) => {
+        const meals = day.meals
+          .map((meal) =>
+            meal.removed
+              ? `  ${meal.label}: Removed`
+              : `  ${meal.label}: ${meal.name} (${Math.round(meal.macros.protein)}g protein)`,
+          )
+          .join("\n");
+        return `Day ${day.day}\n${meals}`;
+      })
+      .join("\n\n");
     return `${days}\n\nShopping List\n${groceryText}`;
   }
 
