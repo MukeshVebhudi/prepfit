@@ -18,6 +18,7 @@ const STORAGE_KEYS = {
   currentAccount: "prepfit-current-account-v1",
 };
 const PLANNER_SCHEMA_VERSION = 2;
+const MEAL_EDIT_HISTORY_LIMIT = 8;
 
 const DEFAULTS = {
   goalMode: "daily",
@@ -105,7 +106,7 @@ let purchasedItems = new Map();
 let pantryItems = new Set();
 let manualGroceries = [];
 let editingManualId = null;
-let mealEditSnapshot = null;
+let mealEditHistory = [];
 let storageMessage = "";
 let unitSystem = "metric";
 
@@ -389,7 +390,7 @@ function handleSavedProfileClick(event) {
 
 function signIn(account) {
   currentAccount = account;
-  mealEditSnapshot = null;
+  mealEditHistory = [];
   safeSetItem(STORAGE_KEYS.currentAccount, account.id);
   document.body.classList.add("is-authenticated");
   dom.accountName.textContent = account.name;
@@ -412,7 +413,7 @@ function logoutAccount() {
   pantryItems = new Set();
   manualGroceries = [];
   editingManualId = null;
-  mealEditSnapshot = null;
+  mealEditHistory = [];
   storageMessage = "";
   safeRemoveItem(STORAGE_KEYS.currentAccount);
   document.body.classList.remove("is-authenticated");
@@ -515,7 +516,7 @@ function generatePlan(options = {}) {
   }
 
   const settings = readSettings();
-  mealEditSnapshot = null;
+  mealEditHistory = [];
   const settingsSaved = saveSettings(settings);
   updateGoalLabel(settings);
 
@@ -567,7 +568,7 @@ function renderCurrentState(note = "") {
   dom.printPlan.disabled = !state.plan.days.length;
   dom.downloadPlan.disabled = !state.plan.days.length;
   dom.copyGroceries.disabled = !state.groceries.length;
-  dom.undoPlanEdit.hidden = !mealEditSnapshot;
+  dom.undoPlanEdit.hidden = mealEditHistory.length === 0;
 }
 
 function readSettings() {
@@ -674,11 +675,12 @@ function swapMeal(dayIndex, mealIndex) {
 }
 
 function captureMealEdit() {
-  mealEditSnapshot = {
+  mealEditHistory.push({
     plan: JSON.parse(JSON.stringify(state.plan)),
     purchases: [...purchasedItems],
     pantry: [...pantryItems],
-  };
+  });
+  if (mealEditHistory.length > MEAL_EDIT_HISTORY_LIMIT) mealEditHistory.shift();
 }
 
 function editMeal(dayIndex, mealIndex, action) {
@@ -709,7 +711,7 @@ function editMeal(dayIndex, mealIndex, action) {
     limits.max,
   );
   if (Math.abs(nextRatio - (meal.portionRatio || 1)) < 0.001) {
-    mealEditSnapshot = null;
+    mealEditHistory.pop();
     renderCurrentState(
       `Portions are limited to ${Math.round(limits.min * 100)}%–${Math.round(limits.max * 100)}% for this budget mode.`,
     );
@@ -747,13 +749,16 @@ function recomputeEditedPlan(message) {
 }
 
 function undoMealEdit() {
-  if (!state || !mealEditSnapshot) return;
-  const snapshot = mealEditSnapshot;
-  mealEditSnapshot = null;
+  if (!state || mealEditHistory.length === 0) return;
+  const snapshot = mealEditHistory.pop();
   state.plan = snapshot.plan;
   purchasedItems = new Map(snapshot.purchases);
   pantryItems = new Set(snapshot.pantry);
-  recomputeEditedPlan("Last meal edit undone.");
+  recomputeEditedPlan(
+    mealEditHistory.length
+      ? `Meal edit undone. ${mealEditHistory.length} earlier ${mealEditHistory.length === 1 ? "edit" : "edits"} can still be undone.`
+      : "Last meal edit undone.",
+  );
 }
 
 function handleGroceryChange(event) {
@@ -918,7 +923,7 @@ function resetSettings() {
   pantryItems = new Set();
   manualGroceries = [];
   editingManualId = null;
-  mealEditSnapshot = null;
+  mealEditHistory = [];
   applySettings(DEFAULTS);
   generatePlan({ shuffle: true });
 }

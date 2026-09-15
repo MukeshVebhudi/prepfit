@@ -79,9 +79,43 @@ const beforeEditRatio = state.plan.days[0].meals[0].portionRatio;
 editMeal(0, 0, 'portion-up');
 assert.ok(state.plan.days[0].meals[0].portionRatio > beforeEditRatio);
 assert.notEqual(JSON.stringify(state.plan), beforeEditPlan);
+const afterFirstEdit = JSON.stringify(state.plan);
+editMeal(0, 0, 'portion-up');
+const afterSecondEdit = JSON.stringify(state.plan);
+editMeal(0, 0, 'remove');
+assert.equal(state.plan.days[0].meals[0].removed, true);
+undoMealEdit();
+assert.equal(JSON.stringify(state.plan), afterSecondEdit);
+undoMealEdit();
+assert.equal(JSON.stringify(state.plan), afterFirstEdit);
 undoMealEdit();
 assert.equal(JSON.stringify(state.plan), beforeEditPlan);
 assert.deepEqual([...purchasedItems], beforeEditPurchases);
+
+let ratioAfterTwoBoundedEdits;
+for (let index = 0; index < 10; index += 1) {
+  editMeal(0, 0, 'portion-up');
+  if (index === 1) ratioAfterTwoBoundedEdits = state.plan.days[0].meals[0].portionRatio;
+}
+assert.equal(mealEditHistory.length, MEAL_EDIT_HISTORY_LIMIT);
+for (let index = 0; index < MEAL_EDIT_HISTORY_LIMIT; index += 1) undoMealEdit();
+assert.equal(mealEditHistory.length, 0);
+assert.equal(state.plan.days[0].meals[0].portionRatio, ratioAfterTwoBoundedEdits);
+const afterBoundedUndos = JSON.stringify(state.plan);
+undoMealEdit();
+assert.equal(JSON.stringify(state.plan), afterBoundedUndos);
+
+const reloadedEditedRecord = persistence.loadPlanner(accountStorageKey('planner'));
+assert.equal(reloadedEditedRecord.kind, 'ready');
+const editSignature = plan => plan.days.map(day => day.meals.map(meal => ({
+  name: meal.name, portionRatio: meal.portionRatio, removed: meal.removed === true,
+  amounts: meal.ingredients.map(ingredient => ingredient.amount),
+})));
+assert.deepEqual(editSignature(reloadedEditedRecord.record.plan), editSignature(state.plan));
+
+state.plan = JSON.parse(beforeEditPlan);
+purchasedItems = new Map(beforeEditPurchases);
+recomputeEditedPlan('Test baseline restored.');
 
 editMeal(0, 0, 'remove');
 assert.equal(state.plan.days[0].meals[0].removed, true);
