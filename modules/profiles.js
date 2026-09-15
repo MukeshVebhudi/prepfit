@@ -24,7 +24,7 @@ export function createProfileStore({
     const saved = parseJson(storage.get(keys.accounts));
     if (!saved || typeof saved !== "object" || Array.isArray(saved)) return Object.create(null);
     return Object.entries(saved).reduce((accounts, [key, profile]) => {
-      if (!profile || typeof profile !== "object") return accounts;
+      if (!profile || typeof profile !== "object" || Array.isArray(profile)) return accounts;
       const id = String(profile.id || key);
       accounts[id] = {
         id,
@@ -89,7 +89,7 @@ export function createProfileStore({
     const idChanges = new Map();
     let changed = false;
     Object.entries(raw).forEach(([key, legacy]) => {
-      if (!legacy || typeof legacy !== "object") {
+      if (!legacy || typeof legacy !== "object" || Array.isArray(legacy)) {
         changed = true;
         return;
       }

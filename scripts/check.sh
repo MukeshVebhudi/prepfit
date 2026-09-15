@@ -17,6 +17,7 @@ node tests/plan-math.test.js
 node tests/dietary-restrictions.test.js
 node tests/persistence.test.js
 node tests/profiles.test.js
+node tests/corrupted-storage.test.js
 node tests/offline.test.js
 node tests/usability.test.js
 

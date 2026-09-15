@@ -237,7 +237,7 @@ Current status is recorded as reproducible checks rather than a numeric self-ass
 - [ ] 4. Close Android signing and physical-device verification (signing complete; device test blocked
   because no phone is connected)
 - [x] 5. Decompose large rendering templates without output changes
-- [ ] 6. Add the corrupted-storage test matrix
+- [x] 6. Add the corrupted-storage test matrix
 - [ ] 7. Record nutrition data provenance per ingredient
 - [ ] 8. Add a privacy-respecting local diagnostic export
 - [ ] 9. Run automated axe accessibility audits and resolve findings
@@ -245,6 +245,11 @@ Current status is recorded as reproducible checks rather than a numeric self-ass
 Step 5 split meal headers, nutrition, recipe bodies, actions, day cards, grocery categories, and
 grocery rows into named rendering helpers. A deterministic pre/post Chromium comparison produced
 identical meal-plan and grocery-list HTML, followed by the complete release and browser suites.
+
+Step 6 rejects malformed settings, planner, grocery, and legacy-profile containers before migration
+or object spreading. Truncated JSON, wrong root and nested types, missing keys, and unavailable
+storage fall back to first-run defaults or a fresh plan without throwing; valid v1 records still
+migrate to the v2 grocery shape.
 
 Manual browser checklist for future releases:
 

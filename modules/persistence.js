@@ -12,6 +12,8 @@ export function createPersistence({
   macrosForMeal,
   macrosForDay,
 }) {
+  const isRecord = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
+
   function storedSettings(settings) {
     const saved = { ...settings };
     delete saved.excluded;
@@ -24,9 +26,11 @@ export function createPersistence({
   }
 
   function loadSettings(key, fallbackKey, defaults) {
+    const current = parseJson(storage.get(key));
+    const legacy = parseJson(storage.get(fallbackKey));
     return {
       ...defaults,
-      ...(parseJson(storage.get(key)) || parseJson(storage.get(fallbackKey)) || {}),
+      ...(isRecord(current) ? current : isRecord(legacy) ? legacy : {}),
     };
   }
 
@@ -54,8 +58,8 @@ export function createPersistence({
     if (
       !record ||
       ![1, schemaVersion].includes(record.schemaVersion) ||
-      !record.settings ||
-      !record.plan
+      !isRecord(record.settings) ||
+      !isRecord(record.plan)
     ) {
       storage.remove(key);
       return {
@@ -65,11 +69,12 @@ export function createPersistence({
     }
     const grocery =
       record.schemaVersion === 1
-        ? { purchases: record.purchases || {}, pantry: [], manual: [] }
+        ? { purchases: record.purchases, pantry: [], manual: [] }
         : record.grocery;
     if (
-      !grocery ||
-      typeof grocery.purchases !== "object" ||
+      !isRecord(grocery) ||
+      !isRecord(grocery.purchases) ||
+      Object.values(grocery.purchases).some((value) => typeof value !== "string") ||
       !Array.isArray(grocery.pantry) ||
       grocery.pantry.some((key) => typeof key !== "string") ||
       !Array.isArray(grocery.manual) ||
