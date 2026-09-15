@@ -13,11 +13,12 @@ for (const [viewportName, viewport] of Object.entries(viewports)) {
       const page = await context.newPage();
       await page.goto("/");
       await page.getByRole("button", { name: "Continue as guest" }).click();
-      if (theme === "evening") {
-        await page.getByRole("button", { name: "Evening" }).click();
-        await expect(page.locator("body")).toHaveAttribute("data-theme", "evening");
+      const expectedTheme = theme === "daylight" ? "morning" : "evening";
+      if ((await page.locator("body").getAttribute("data-theme")) !== expectedTheme) {
+        await page.locator("#theme-toggle").click();
         await page.waitForTimeout(500);
       }
+      await expect(page.locator("body")).toHaveAttribute("data-theme", expectedTheme);
       await expect(page.locator("#meal-plan .meal-card").first()).toBeVisible();
 
       const results = await new AxeBuilder({ page }).analyze();
