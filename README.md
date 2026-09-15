@@ -240,7 +240,7 @@ Current status is recorded as reproducible checks rather than a numeric self-ass
 - [x] 6. Add the corrupted-storage test matrix
 - [x] 7. Record nutrition data provenance per ingredient
 - [x] 8. Add a privacy-respecting local diagnostic export
-- [ ] 9. Run automated axe accessibility audits and resolve findings
+- [x] 9. Run automated axe accessibility audits and resolve findings
 
 Step 5 split meal headers, nutrition, recipe bodies, actions, day cards, grocery categories, and
 grocery rows into named rendering helpers. A deterministic pre/post Chromium comparison produced
@@ -261,6 +261,11 @@ contains storage availability, quota estimates, schema presence, record counts, 
 only. It makes no network request and excludes storage keys, profile identifiers, settings values,
 meal plans, groceries, favorites, browser identity, and other personal data. Automated tests cover
 normal, denied-storage, and rejected-quota paths.
+
+Step 9 adds a pinned axe-core Playwright audit of the generated planner at 1440×1000 and 390×844
+in both daylight and evening themes. The audit checks the full axe ruleset, including WCAG color
+contrast and document structure. It found and fixed the evening mobile plan-shortcut contrast; all
+four configurations now pass with no known axe violations.
 
 Manual browser checklist for future releases:
 
