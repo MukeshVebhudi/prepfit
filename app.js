@@ -6,6 +6,7 @@ import { createPlanner } from "./modules/planner.js";
 import { createProfileStore } from "./modules/profiles.js";
 import { createPersistence } from "./modules/persistence.js";
 import { createRenderer } from "./modules/render.js";
+import { createDebugInfo } from "./modules/diagnostics.js";
 
 const STORAGE_KEYS = {
   settings: "prepfit-settings-v2",
@@ -69,6 +70,7 @@ const dom = {
   printPlan: document.querySelector("#print-plan"),
   downloadPlan: document.querySelector("#download-plan"),
   copyGroceries: document.querySelector("#copy-groceries"),
+  copyDebugInfo: document.querySelector("#copy-debug-info"),
   manualGroceryForm: document.querySelector("#manual-grocery-form"),
   manualGrocerySubmit: document.querySelector("#manual-grocery-submit"),
   manualGroceryCancel: document.querySelector("#manual-grocery-cancel"),
@@ -259,6 +261,7 @@ function bindEvents() {
   dom.printPlan.addEventListener("click", () => window.print());
   dom.downloadPlan.addEventListener("click", downloadPlan);
   dom.copyGroceries.addEventListener("click", copyGroceries);
+  dom.copyDebugInfo.addEventListener("click", copyDebugInfo);
   dom.resetPlan.addEventListener("click", resetSettings);
   dom.clearFavorites.addEventListener("click", clearFavorites);
   dom.authForm.addEventListener("submit", handleAuthSubmit);
@@ -880,6 +883,16 @@ function handleMealAction(event) {
 
 async function copyGroceries() {
   await exporter.copyText(lastGroceryText, dom.copyGroceries);
+}
+
+async function copyDebugInfo() {
+  const details = await createDebugInfo({
+    storage: browserStorage,
+    navigator: globalThis.navigator || {},
+    caches: globalThis.caches,
+    schemaVersion: PLANNER_SCHEMA_VERSION,
+  });
+  await exporter.copyText(JSON.stringify(details, null, 2), dom.copyDebugInfo, "Copy debug info");
 }
 
 function downloadPlan() {

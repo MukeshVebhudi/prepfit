@@ -5,7 +5,7 @@ export function createExporter({
   urlApi = globalThis.URL,
   BlobType = globalThis.Blob,
 }) {
-  async function copyText(text, button) {
+  async function copyText(text, button, resetLabel = "Copy") {
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
@@ -20,7 +20,7 @@ export function createExporter({
     }
     button.textContent = "Copied";
     timers.setTimeout(() => {
-      button.textContent = "Copy";
+      button.textContent = resetLabel;
     }, 1300);
   }
 

@@ -235,11 +235,11 @@ Current status is recorded as reproducible checks rather than a numeric self-ass
 - [x] 2. Strengthen runtime lint rules
 - [x] 3. Replace numeric self-grading with falsifiable release status
 - [ ] 4. Close Android signing and physical-device verification (signing complete; device test blocked
-  because no phone is connected)
+      because no phone is connected)
 - [x] 5. Decompose large rendering templates without output changes
 - [x] 6. Add the corrupted-storage test matrix
 - [x] 7. Record nutrition data provenance per ingredient
-- [ ] 8. Add a privacy-respecting local diagnostic export
+- [x] 8. Add a privacy-respecting local diagnostic export
 - [ ] 9. Run automated axe accessibility audits and resolve findings
 
 Step 5 split meal headers, nutrition, recipe bodies, actions, day cards, grocery categories, and
@@ -255,6 +255,12 @@ Step 7 audited all 82 nutrition entries: every entry records a source title, HTT
 manufacturer reference, and checked date; 77 USDA entries also record an FDC ID. Data-integrity
 checks now enforce that contract and `NUTRITION.md` distinguishes sourced ingredient values from
 authored recipe ratios, cooking assumptions, target fitting, and user-entered supplement estimates.
+
+Step 8 adds a local **Copy debug info** action beside plan settings. Its versioned JSON output
+contains storage availability, quota estimates, schema presence, record counts, and feature support
+only. It makes no network request and excludes storage keys, profile identifiers, settings values,
+meal plans, groceries, favorites, browser identity, and other personal data. Automated tests cover
+normal, denied-storage, and rejected-quota paths.
 
 Manual browser checklist for future releases:
 

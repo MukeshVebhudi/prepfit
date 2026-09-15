@@ -19,6 +19,10 @@ test("number settings allow normal replacement typing", async ({ page }) => {
 
   await expect(page.locator("#summary-stats")).toContainText("4");
   await expect(page.locator("#summary-stats")).toContainText("6 days");
+
+  const debugButton = page.locator("#copy-debug-info");
+  await debugButton.click();
+  await expect(debugButton).toHaveText("Copied");
 });
 
 test("complete planning journey persists and works offline", async ({ page, context }, testInfo) => {
