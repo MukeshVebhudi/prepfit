@@ -120,6 +120,8 @@ function supplementMacros(supplement) {
       calories: clamp(Number(settings.supplementCalories) || 0, 0, 1200),
       carbs: clamp(Number(settings.supplementCarbs) || 0, 0, 200),
       fat: clamp(Number(settings.supplementFat) || 0, 0, 120),
+      fiber: clamp(Number(settings.supplementFiber) || 0, 0, 100),
+      sodium: clamp(Number(settings.supplementSodium) || 0, 0, 5000),
     };
   }
   return macrosForIngredient(supplementalPowderIngredient(protein));
@@ -167,6 +169,8 @@ function averageMacros(days) {
     calories: total.calories / days.length,
     carbs: total.carbs / days.length,
     fat: total.fat / days.length,
+    fiber: total.fiber / days.length,
+    sodium: total.sodium / days.length,
   };
 }
 

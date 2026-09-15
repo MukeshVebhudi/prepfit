@@ -66,6 +66,8 @@ export function createRenderer({
       ["Avg calories", Math.round(averages.calories)],
       ["Avg carbs", `${Math.round(averages.carbs)}g`],
       ["Avg fat", `${Math.round(averages.fat)}g`],
+      ["Avg fiber", `${Math.round(averages.fiber)}g`],
+      ["Avg sodium", `${Math.round(averages.sodium)}mg`],
       ["Total meals", activeMealCount],
       [
         "Target status",
@@ -93,7 +95,7 @@ export function createRenderer({
 
   function mealNutrition(meal) {
     return `<p class="auth-hint">Estimated nutrition per serving; ingredient quantities below cover all listed servings.</p>
-      <div class="badge-row" aria-label="Meal macros"><span class="badge protein">${Math.round(meal.macros.protein)}g protein</span><span class="badge calories">${Math.round(meal.macros.calories)} kcal</span><span class="badge carb">${Math.round(meal.macros.carbs)}g carbs</span><span class="badge fat">${Math.round(meal.macros.fat)}g fat</span></div>`;
+      <div class="badge-row" aria-label="Meal nutrition"><span class="badge protein">${Math.round(meal.macros.protein)}g protein</span><span class="badge calories">${Math.round(meal.macros.calories)} kcal</span><span class="badge carb">${Math.round(meal.macros.carbs)}g carbs</span><span class="badge fat">${Math.round(meal.macros.fat)}g fat</span><span class="badge fiber">${Math.round(meal.macros.fiber)}g fiber</span><span class="badge sodium">${Math.round(meal.macros.sodium)}mg sodium</span></div>`;
   }
 
   function mealRecipeBody(meal, servings, servingLabel) {
@@ -132,11 +134,11 @@ export function createRenderer({
   }
 
   function batchDayHeader(day, settings, servings) {
-    return `<div class="day-header"><div><p class="eyebrow">Batch cook set</p><h3>${Math.round(day.macros.protein)}g protein/day · ${Math.round(day.macros.calories)} calories/day</h3><p>Cook once for ${settings.days} ${plural("day", settings.days)} and portion ${servings * 3} total meals.</p></div><div class="badge-row"><span class="badge protein">${servings} ${plural("serving", servings)}</span><span class="badge calories">${settings.budget.replace("-", " ")}</span></div></div>`;
+    return `<div class="day-header"><div><p class="eyebrow">Batch cook set</p><h3>${Math.round(day.macros.protein)}g protein · ${Math.round(day.macros.calories)} calories · ${Math.round(day.macros.fiber)}g fiber · ${Math.round(day.macros.sodium)}mg sodium per day</h3><p>Cook once for ${settings.days} ${plural("day", settings.days)} and portion ${servings * 3} total meals.</p></div><div class="badge-row"><span class="badge protein">${servings} ${plural("serving", servings)}</span><span class="badge calories">${settings.budget.replace("-", " ")}</span></div></div>`;
   }
 
   function varietyDayHeader(day, settings) {
-    return `<div class="day-header"><div><p class="eyebrow">Day ${day.day}</p><h3>${Math.round(day.macros.protein)}g protein · ${Math.round(day.macros.calories)} calories</h3><p>Unique daily set</p></div><div class="badge-row"><span class="badge protein">${settings.people} ${plural("person", settings.people)}</span><span class="badge calories">${settings.budget.replace("-", " ")}</span></div></div>`;
+    return `<div class="day-header"><div><p class="eyebrow">Day ${day.day}</p><h3>${Math.round(day.macros.protein)}g protein · ${Math.round(day.macros.calories)} calories · ${Math.round(day.macros.fiber)}g fiber · ${Math.round(day.macros.sodium)}mg sodium</h3><p>Unique daily set</p></div><div class="badge-row"><span class="badge protein">${settings.people} ${plural("person", settings.people)}</span><span class="badge calories">${settings.budget.replace("-", " ")}</span></div></div>`;
   }
 
   function batchDay(day, settings) {

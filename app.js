@@ -27,6 +27,8 @@ const DEFAULTS = {
   supplementCalories: 0,
   supplementCarbs: 0,
   supplementFat: 0,
+  supplementFiber: 0,
+  supplementSodium: 0,
   supplementAllergens: "dairy",
   people: 1,
   days: 5,
@@ -599,6 +601,8 @@ function readSettings() {
     supplementCalories: clamp(numberFrom(data.get("supplementCalories"), 0), 0, 1200),
     supplementCarbs: clamp(numberFrom(data.get("supplementCarbs"), 0), 0, 200),
     supplementFat: clamp(numberFrom(data.get("supplementFat"), 0), 0, 120),
+    supplementFiber: clamp(numberFrom(data.get("supplementFiber"), 0), 0, 100),
+    supplementSodium: clamp(numberFrom(data.get("supplementSodium"), 0), 0, 5000),
     supplementAllergens: String(data.get("supplementAllergens") || "")
       .trim()
       .slice(0, 100),

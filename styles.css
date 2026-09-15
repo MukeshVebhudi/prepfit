@@ -860,6 +860,12 @@ legend {
   background: color-mix(in srgb, var(--yellow) 18%, transparent);
 }
 
+.badge.fiber,
+.badge.sodium {
+  color: var(--ink);
+  background: var(--surface-soft);
+}
+
 .meal-plan {
   display: grid;
   gap: 0.9rem;

@@ -11,6 +11,8 @@ const NUTRITION_DATA = {
       calories: 165,
       carbs: 0.0,
       fat: 3.57,
+      fiber: 0,
+      sodium: 74,
     },
     preparation: "cooked, skinless meat",
     gramsPerUnit: {},
@@ -33,6 +35,8 @@ const NUTRITION_DATA = {
       calories: 193,
       carbs: 0.0,
       fat: 7.58,
+      fiber: 0,
+      sodium: 85,
     },
     preparation: "cooked, 95% lean crumbles",
     gramsPerUnit: {},
@@ -55,6 +59,8 @@ const NUTRITION_DATA = {
       calories: 181,
       carbs: 0.73,
       fat: 7.23,
+      fiber: 0,
+      sodium: 62,
     },
     preparation: "cooked, trimmed lean sirloin",
     gramsPerUnit: {},
@@ -78,6 +84,8 @@ const NUTRITION_DATA = {
       calories: 213,
       carbs: 0.0,
       fat: 11.6,
+      fiber: 0,
+      sodium: 90,
     },
     preparation: "cooked, 93% lean crumbles",
     gramsPerUnit: {},
@@ -100,6 +108,8 @@ const NUTRITION_DATA = {
       calories: 206,
       carbs: 0.0,
       fat: 12.4,
+      fiber: 0,
+      sodium: 61,
     },
     preparation: "cooked Atlantic farmed salmon",
     gramsPerUnit: {},
@@ -122,6 +132,8 @@ const NUTRITION_DATA = {
       calories: 86.0,
       carbs: 0.0,
       fat: 0.96,
+      fiber: 0,
+      sodium: 247,
     },
     preparation: "water-packed, drained solids",
     gramsPerUnit: {
@@ -147,6 +159,8 @@ const NUTRITION_DATA = {
       calories: 83.0,
       carbs: 1.18,
       fat: 5.26,
+      fiber: 1,
+      sodium: 4,
     },
     preparation: "drained, extra firm nigari tofu",
     gramsPerUnit: {},
@@ -169,6 +183,8 @@ const NUTRITION_DATA = {
       calories: 192,
       carbs: 7.64,
       fat: 10.8,
+      fiber: 7.14285714,
+      sodium: 9,
     },
     preparation: "as sold, before cooking",
     gramsPerUnit: {},
@@ -179,6 +195,13 @@ const NUTRITION_DATA = {
       fdcId: 174272,
       dataset: "USDA SR Legacy April 2018",
       checked: "2026-09-09",
+    },
+    fiberSource: {
+      title: "Lightlife Original Tempeh nutrition panel",
+      url: "https://lightlife.com/product/original-tempeh/",
+      dataset: "Manufacturer label",
+      checked: "2026-09-15",
+      serving: "6 g fiber per 84 g",
     },
   },
   "egg whites": {
@@ -191,6 +214,8 @@ const NUTRITION_DATA = {
       calories: 52.0,
       carbs: 0.73,
       fat: 0.17,
+      fiber: 0,
+      sodium: 166,
     },
     preparation: "raw liquid egg white",
     gramsPerUnit: {
@@ -215,6 +240,8 @@ const NUTRITION_DATA = {
       calories: 143,
       carbs: 0.72,
       fat: 9.51,
+      fiber: 0,
+      sodium: 142,
     },
     preparation: "raw, shell removed",
     gramsPerUnit: {
@@ -239,6 +266,8 @@ const NUTRITION_DATA = {
       calories: 106,
       carbs: 2.2,
       fat: 3.77,
+      fiber: 0,
+      sodium: 898,
     },
     preparation: "ready-to-eat deli turkey",
     gramsPerUnit: {
@@ -263,6 +292,8 @@ const NUTRITION_DATA = {
       calories: 59.0,
       carbs: 3.6,
       fat: 0.39,
+      fiber: 0,
+      sodium: 36,
     },
     preparation: "plain nonfat, ready to eat",
     gramsPerUnit: {},
@@ -285,6 +316,8 @@ const NUTRITION_DATA = {
       calories: 59.0,
       carbs: 3.6,
       fat: 0.39,
+      fiber: 0,
+      sodium: 36,
     },
     preparation: "plain nonfat, ready to eat",
     gramsPerUnit: {},
@@ -307,6 +340,8 @@ const NUTRITION_DATA = {
       calories: 81.0,
       carbs: 4.76,
       fat: 2.27,
+      fiber: 0,
+      sodium: 308,
     },
     preparation: "2% milkfat, ready to eat",
     gramsPerUnit: {
@@ -331,6 +366,8 @@ const NUTRITION_DATA = {
       calories: 352,
       carbs: 6.25,
       fat: 1.56,
+      fiber: 3.1,
+      sodium: 156,
     },
     preparation: "dry whey-based powder",
     gramsPerUnit: {},
@@ -353,6 +390,8 @@ const NUTRITION_DATA = {
       calories: 121,
       carbs: 8.91,
       fat: 5.2,
+      fiber: 5.2,
+      sodium: 6,
     },
     preparation: "cooked, shelled",
     gramsPerUnit: {
@@ -377,6 +416,8 @@ const NUTRITION_DATA = {
       calories: 116,
       carbs: 20.1,
       fat: 0.38,
+      fiber: 7.9,
+      sodium: 2,
     },
     preparation: "cooked and drained, no salt",
     gramsPerUnit: {
@@ -401,6 +442,8 @@ const NUTRITION_DATA = {
       calories: 164,
       carbs: 27.4,
       fat: 2.59,
+      fiber: 7.6,
+      sodium: 7,
     },
     preparation: "cooked and drained, no salt",
     gramsPerUnit: {
@@ -425,6 +468,8 @@ const NUTRITION_DATA = {
       calories: 132,
       carbs: 23.7,
       fat: 0.54,
+      fiber: 8.7,
+      sodium: 1,
     },
     preparation: "cooked and drained, no salt",
     gramsPerUnit: {
@@ -449,6 +494,8 @@ const NUTRITION_DATA = {
       calories: 143,
       carbs: 26.2,
       fat: 0.65,
+      fiber: 9,
+      sodium: 1,
     },
     preparation: "cooked and drained, no salt",
     gramsPerUnit: {
@@ -473,6 +520,8 @@ const NUTRITION_DATA = {
       calories: 127,
       carbs: 22.8,
       fat: 0.5,
+      fiber: 6.4,
+      sodium: 1,
     },
     preparation: "cooked and drained, no salt",
     gramsPerUnit: {
@@ -497,6 +546,8 @@ const NUTRITION_DATA = {
       calories: 130,
       carbs: 28.2,
       fat: 0.28,
+      fiber: 0.4,
+      sodium: 1,
     },
     preparation: "cooked white long-grain rice",
     gramsPerUnit: {
@@ -521,6 +572,8 @@ const NUTRITION_DATA = {
       calories: 123,
       carbs: 25.6,
       fat: 0.97,
+      fiber: 1.6,
+      sodium: 4,
     },
     preparation: "cooked brown long-grain rice",
     gramsPerUnit: {
@@ -546,6 +599,8 @@ const NUTRITION_DATA = {
       calories: 130,
       carbs: 28.2,
       fat: 0.28,
+      fiber: 0.4,
+      sodium: 1,
     },
     preparation: "cooked white long-grain rice estimate",
     gramsPerUnit: {
@@ -570,6 +625,8 @@ const NUTRITION_DATA = {
       calories: 120,
       carbs: 21.3,
       fat: 1.92,
+      fiber: 2.8,
+      sodium: 7,
     },
     preparation: "cooked in water",
     gramsPerUnit: {
@@ -594,6 +651,8 @@ const NUTRITION_DATA = {
       calories: 127,
       carbs: 26.4,
       fat: 0.85,
+      fiber: 3.9,
+      sodium: 5,
     },
     preparation: "cooked spelt (farro grande)",
     gramsPerUnit: {
@@ -618,6 +677,8 @@ const NUTRITION_DATA = {
       calories: 112,
       carbs: 23.2,
       fat: 0.16,
+      fiber: 1.4,
+      sodium: 5,
     },
     preparation: "cooked in water",
     gramsPerUnit: {
@@ -642,6 +703,8 @@ const NUTRITION_DATA = {
       calories: 275,
       carbs: 55.7,
       fat: 1.2,
+      fiber: 2.2,
+      sodium: 536,
     },
     preparation: "ready-to-eat white pita",
     gramsPerUnit: {
@@ -666,6 +729,8 @@ const NUTRITION_DATA = {
       calories: 291,
       carbs: 50.4,
       fat: 5.65,
+      fiber: 2.2,
+      sodium: 465,
     },
     preparation: "plain, ready-to-eat naan",
     gramsPerUnit: {
@@ -690,6 +755,8 @@ const NUTRITION_DATA = {
       calories: 252,
       carbs: 42.7,
       fat: 3.5,
+      fiber: 6,
+      sodium: 455,
     },
     preparation: "whole-wheat bread, before toasting",
     gramsPerUnit: {
@@ -714,6 +781,8 @@ const NUTRITION_DATA = {
       calories: 379,
       carbs: 67.7,
       fat: 6.52,
+      fiber: 10.1,
+      sodium: 6,
     },
     preparation: "dry rolled oats",
     gramsPerUnit: {
@@ -738,6 +807,8 @@ const NUTRITION_DATA = {
       calories: 379,
       carbs: 67.7,
       fat: 6.52,
+      fiber: 10.1,
+      sodium: 6,
     },
     preparation: "dry rolled oats",
     gramsPerUnit: {
@@ -762,6 +833,8 @@ const NUTRITION_DATA = {
       calories: 34.0,
       carbs: 6.64,
       fat: 0.37,
+      fiber: 2.6,
+      sodium: 33,
     },
     preparation: "raw, chopped",
     gramsPerUnit: {
@@ -786,6 +859,8 @@ const NUTRITION_DATA = {
       calories: 23.0,
       carbs: 3.63,
       fat: 0.39,
+      fiber: 2.2,
+      sodium: 79,
     },
     preparation: "raw leaves",
     gramsPerUnit: {
@@ -810,6 +885,8 @@ const NUTRITION_DATA = {
       calories: 17.0,
       carbs: 3.11,
       fat: 0.32,
+      fiber: 1,
+      sodium: 8,
     },
     preparation: "raw, chopped, skin on",
     gramsPerUnit: {
@@ -834,6 +911,8 @@ const NUTRITION_DATA = {
       calories: 20.0,
       carbs: 3.88,
       fat: 0.12,
+      fiber: 2.1,
+      sodium: 2,
     },
     preparation: "raw, edible portion",
     gramsPerUnit: {
@@ -858,6 +937,8 @@ const NUTRITION_DATA = {
       calories: 31.0,
       carbs: 6.97,
       fat: 0.22,
+      fiber: 2.7,
+      sodium: 6,
     },
     preparation: "raw, cut into half-inch pieces",
     gramsPerUnit: {
@@ -882,6 +963,8 @@ const NUTRITION_DATA = {
       calories: 26.0,
       carbs: 6.03,
       fat: 0.3,
+      fiber: 2.1,
+      sodium: 4,
     },
     preparation: "raw red bell pepper, chopped",
     gramsPerUnit: {
@@ -906,6 +989,8 @@ const NUTRITION_DATA = {
       calories: 40.0,
       carbs: 9.34,
       fat: 0.1,
+      fiber: 1.7,
+      sodium: 4,
     },
     preparation: "raw, peeled",
     gramsPerUnit: {
@@ -931,6 +1016,8 @@ const NUTRITION_DATA = {
       calories: 86.0,
       carbs: 20.1,
       fat: 0.05,
+      fiber: 3,
+      sodium: 55,
     },
     preparation: "raw, edible portion",
     gramsPerUnit: {
@@ -955,6 +1042,8 @@ const NUTRITION_DATA = {
       calories: 77.0,
       carbs: 17.5,
       fat: 0.09,
+      fiber: 2.1,
+      sodium: 6,
     },
     preparation: "raw potato, flesh and skin",
     gramsPerUnit: {},
@@ -977,6 +1066,8 @@ const NUTRITION_DATA = {
       calories: 42.0,
       carbs: 7.55,
       fat: 0.2,
+      fiber: 2.6,
+      sodium: 4,
     },
     preparation: "raw edible-podded peas, whole",
     gramsPerUnit: {
@@ -1001,6 +1092,8 @@ const NUTRITION_DATA = {
       calories: 17.0,
       carbs: 3.29,
       fat: 0.3,
+      fiber: 2.1,
+      sodium: 8,
     },
     preparation: "raw, shredded",
     gramsPerUnit: {
@@ -1025,6 +1118,8 @@ const NUTRITION_DATA = {
       calories: 25.0,
       carbs: 5.8,
       fat: 0.1,
+      fiber: 2.5,
+      sodium: 18,
     },
     preparation: "raw, shredded",
     gramsPerUnit: {
@@ -1049,6 +1144,8 @@ const NUTRITION_DATA = {
       calories: 41.0,
       carbs: 9.58,
       fat: 0.24,
+      fiber: 2.8,
+      sodium: 69,
     },
     preparation: "raw, grated",
     gramsPerUnit: {
@@ -1073,6 +1170,8 @@ const NUTRITION_DATA = {
       calories: 15.0,
       carbs: 3.63,
       fat: 0.11,
+      fiber: 0.5,
+      sodium: 2,
     },
     preparation: "raw, skin on, sliced",
     gramsPerUnit: {
@@ -1097,6 +1196,8 @@ const NUTRITION_DATA = {
       calories: 96.0,
       carbs: 21.0,
       fat: 1.5,
+      fiber: 2.4,
+      sodium: 1,
     },
     preparation: "cooked kernels, drained, no salt",
     gramsPerUnit: {
@@ -1121,6 +1222,8 @@ const NUTRITION_DATA = {
       calories: 84.0,
       carbs: 15.6,
       fat: 0.22,
+      fiber: 5.5,
+      sodium: 3,
     },
     preparation: "cooked and drained, no salt",
     gramsPerUnit: {
@@ -1145,6 +1248,8 @@ const NUTRITION_DATA = {
       calories: 160,
       carbs: 8.53,
       fat: 14.7,
+      fiber: 6.7,
+      sodium: 7,
     },
     preparation: "raw flesh, no skin or pit",
     gramsPerUnit: {
@@ -1169,6 +1274,8 @@ const NUTRITION_DATA = {
       calories: 57.0,
       carbs: 14.5,
       fat: 0.33,
+      fiber: 2.4,
+      sodium: 1,
     },
     preparation: "raw",
     gramsPerUnit: {
@@ -1193,6 +1300,8 @@ const NUTRITION_DATA = {
       calories: 598,
       carbs: 22.3,
       fat: 51.4,
+      fiber: 5,
+      sodium: 426,
     },
     preparation: "smooth, salted, ready to eat",
     gramsPerUnit: {
@@ -1218,6 +1327,8 @@ const NUTRITION_DATA = {
       calories: 29.0,
       carbs: 6.64,
       fat: 0.17,
+      fiber: 1.9,
+      sodium: 711,
     },
     preparation: "ready-to-serve salsa",
     gramsPerUnit: {
@@ -1242,6 +1353,8 @@ const NUTRITION_DATA = {
       calories: 50.0,
       carbs: 7.43,
       fat: 1.61,
+      fiber: 1.8,
+      sodium: 437,
     },
     preparation: "ready-to-serve marinara",
     gramsPerUnit: {
@@ -1266,6 +1379,8 @@ const NUTRITION_DATA = {
       calories: 24.0,
       carbs: 5.31,
       fat: 0.3,
+      fiber: 1.5,
+      sodium: 474,
     },
     preparation: "canned tomato sauce",
     gramsPerUnit: {
@@ -1290,6 +1405,8 @@ const NUTRITION_DATA = {
       calories: 32.0,
       carbs: 7.29,
       fat: 0.28,
+      fiber: 1.9,
+      sodium: 186,
     },
     preparation: "canned crushed tomatoes",
     gramsPerUnit: {
@@ -1314,6 +1431,8 @@ const NUTRITION_DATA = {
       calories: 89.0,
       carbs: 15.6,
       fat: 0.02,
+      fiber: 0.1,
+      sodium: 3830,
     },
     preparation: "ready-to-serve teriyaki",
     gramsPerUnit: {
@@ -1338,6 +1457,8 @@ const NUTRITION_DATA = {
       calories: 53.0,
       carbs: 4.93,
       fat: 0.57,
+      fiber: 0.8,
+      sodium: 5490,
     },
     preparation: "soy and wheat shoyu sauce",
     gramsPerUnit: {
@@ -1362,6 +1483,8 @@ const NUTRITION_DATA = {
       calories: 172,
       carbs: 40.8,
       fat: 0.63,
+      fiber: 0.9,
+      sodium: 1030,
     },
     preparation: "ready-to-serve barbecue sauce",
     gramsPerUnit: {
@@ -1386,6 +1509,8 @@ const NUTRITION_DATA = {
       calories: 237,
       carbs: 15.0,
       fat: 17.8,
+      fiber: 5.5,
+      sodium: 426,
     },
     preparation: "commercial ready-to-eat hummus",
     gramsPerUnit: {
@@ -1410,6 +1535,8 @@ const NUTRITION_DATA = {
       calories: 884,
       carbs: 0.0,
       fat: 100,
+      fiber: 0,
+      sodium: 2,
     },
     preparation: "olive oil",
     gramsPerUnit: {
@@ -1434,6 +1561,8 @@ const NUTRITION_DATA = {
       calories: 22.0,
       carbs: 6.9,
       fat: 0.24,
+      fiber: 0.3,
+      sodium: 1,
     },
     preparation: "fresh lemon juice",
     gramsPerUnit: {
@@ -1458,6 +1587,8 @@ const NUTRITION_DATA = {
       calories: 149,
       carbs: 33.1,
       fat: 0.5,
+      fiber: 2.1,
+      sodium: 17,
     },
     preparation: "raw, peeled",
     gramsPerUnit: {
@@ -1482,6 +1613,8 @@ const NUTRITION_DATA = {
       calories: 80.0,
       carbs: 17.8,
       fat: 0.75,
+      fiber: 2,
+      sodium: 13,
     },
     preparation: "raw, grated",
     gramsPerUnit: {
@@ -1506,6 +1639,8 @@ const NUTRITION_DATA = {
       calories: 322,
       carbs: 58.0,
       fat: 0.0,
+      fiber: 13.3,
+      sodium: 7200,
     },
     preparation: "dry original taco seasoning",
     gramsPerUnit: {
@@ -1530,6 +1665,8 @@ const NUTRITION_DATA = {
       calories: 335,
       carbs: 56.6,
       fat: 7.3,
+      fiber: 10.8,
+      sodium: 4620,
     },
     preparation: "dry original chili seasoning",
     gramsPerUnit: {
@@ -1554,6 +1691,8 @@ const NUTRITION_DATA = {
       calories: 403,
       carbs: 3.37,
       fat: 33.3,
+      fiber: 0,
+      sodium: 653,
     },
     preparation: "cheddar, shredded",
     gramsPerUnit: {
@@ -1578,6 +1717,8 @@ const NUTRITION_DATA = {
       calories: 304,
       carbs: 8.06,
       fat: 19.7,
+      fiber: 0,
+      sodium: 682,
     },
     preparation: "low-moisture part-skim, shredded",
     gramsPerUnit: {
@@ -1602,6 +1743,8 @@ const NUTRITION_DATA = {
       calories: 420,
       carbs: 13.9,
       fat: 27.8,
+      fiber: 0,
+      sodium: 1800,
     },
     preparation: "parmesan, grated",
     gramsPerUnit: {
@@ -1626,6 +1769,8 @@ const NUTRITION_DATA = {
       calories: 330,
       carbs: 6.65,
       fat: 34.7,
+      fiber: 2.2,
+      sodium: 4,
     },
     preparation: "unsweetened coconut cream",
     gramsPerUnit: {
@@ -1650,6 +1795,8 @@ const NUTRITION_DATA = {
       calories: 25.0,
       carbs: 4.97,
       fat: 0.28,
+      fiber: 2,
+      sodium: 30,
     },
     preparation: "raw cauliflower, chopped before ricing",
     gramsPerUnit: {
@@ -1674,6 +1821,8 @@ const NUTRITION_DATA = {
       calories: 251,
       carbs: 64.0,
       fat: 3.26,
+      fiber: 25.3,
+      sodium: 20,
     },
     preparation: "dry, ground",
     gramsPerUnit: {
@@ -1698,6 +1847,8 @@ const NUTRITION_DATA = {
       calories: 282,
       carbs: 54.0,
       fat: 12.9,
+      fiber: 34.9,
+      sodium: 68,
     },
     preparation: "dry paprika",
     gramsPerUnit: {
@@ -1722,6 +1873,8 @@ const NUTRITION_DATA = {
       calories: 375,
       carbs: 44.2,
       fat: 22.3,
+      fiber: 10.5,
+      sodium: 168,
     },
     preparation: "dry cumin seed",
     gramsPerUnit: {},
@@ -1744,6 +1897,8 @@ const NUTRITION_DATA = {
       calories: 298,
       carbs: 55.0,
       fat: 17.8,
+      fiber: 41.9,
+      sodium: 35,
     },
     preparation: "dry coriander seed",
     gramsPerUnit: {},
@@ -1766,6 +1921,8 @@ const NUTRITION_DATA = {
       calories: 331,
       carbs: 72.7,
       fat: 0.73,
+      fiber: 9,
+      sodium: 60,
     },
     preparation: "dry garlic powder",
     gramsPerUnit: {
@@ -1790,6 +1947,8 @@ const NUTRITION_DATA = {
       calories: 253,
       carbs: 55.8,
       fat: 4.36,
+      fiber: 13.6,
+      sodium: 208,
     },
     preparation: "dried dill weed",
     gramsPerUnit: {
@@ -1814,6 +1973,8 @@ const NUTRITION_DATA = {
       calories: 0.0,
       carbs: 0.0,
       fat: 0.0,
+      fiber: 0,
+      sodium: 38800,
     },
     preparation: "table salt",
     gramsPerUnit: {
@@ -1838,6 +1999,8 @@ const NUTRITION_DATA = {
       calories: 90,
       carbs: 1,
       fat: 7,
+      fiber: 0,
+      sodium: 10,
     },
     preparation: "ready-to-eat paneer",
     gramsPerUnit: {},
@@ -1859,6 +2022,8 @@ const NUTRITION_DATA = {
       calories: 190,
       carbs: 39,
       fat: 1,
+      fiber: 4,
+      sodium: 0,
     },
     preparation: "dry Barilla Protein+ penne",
     gramsPerUnit: {},
@@ -1880,6 +2045,8 @@ const NUTRITION_DATA = {
       calories: 40,
       carbs: 5,
       fat: 2,
+      fiber: 0,
+      sodium: 180,
     },
     preparation: "ready-to-use Patak’s Tikka Masala sauce",
     gramsPerUnit: {
@@ -1909,6 +2076,8 @@ const NUTRITION_DATA = {
       calories: 45,
       carbs: 7,
       fat: 1.5,
+      fiber: 1,
+      sodium: 180,
     },
     preparation: "ready-to-use Patak’s Mild Curry sauce",
     gramsPerUnit: {
@@ -1938,6 +2107,8 @@ const NUTRITION_DATA = {
       calories: 90,
       carbs: 2,
       fat: 9,
+      fiber: 0,
+      sodium: 320,
     },
     preparation: "ready-to-use RAGÚ Classic Alfredo",
     gramsPerUnit: {
