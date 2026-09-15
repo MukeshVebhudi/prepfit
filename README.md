@@ -238,7 +238,7 @@ Current status is recorded as reproducible checks rather than a numeric self-ass
   because no phone is connected)
 - [x] 5. Decompose large rendering templates without output changes
 - [x] 6. Add the corrupted-storage test matrix
-- [ ] 7. Record nutrition data provenance per ingredient
+- [x] 7. Record nutrition data provenance per ingredient
 - [ ] 8. Add a privacy-respecting local diagnostic export
 - [ ] 9. Run automated axe accessibility audits and resolve findings
 
@@ -250,6 +250,11 @@ Step 6 rejects malformed settings, planner, grocery, and legacy-profile containe
 or object spreading. Truncated JSON, wrong root and nested types, missing keys, and unavailable
 storage fall back to first-run defaults or a fresh plan without throwing; valid v1 records still
 migrate to the v2 grocery shape.
+
+Step 7 audited all 82 nutrition entries: every entry records a source title, HTTPS URL, dataset or
+manufacturer reference, and checked date; 77 USDA entries also record an FDC ID. Data-integrity
+checks now enforce that contract and `NUTRITION.md` distinguishes sourced ingredient values from
+authored recipe ratios, cooking assumptions, target fitting, and user-entered supplement estimates.
 
 Manual browser checklist for future releases:
 
