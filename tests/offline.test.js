@@ -67,6 +67,9 @@ async function dispatched(type, request) {
   assert.ok(cacheName.includes(encodeURIComponent("/apps/prepfit/")));
   assert.ok(shell.every((url) => url.startsWith("https://example.test/apps/prepfit/")));
   assert.ok(stores.get(cacheName).has("https://example.test/apps/prepfit/manifest.webmanifest"));
+  for (const stylesheet of ["foundation", "layout", "components", "responsive", "print", "nutrition"]) {
+    assert.ok(stores.get(cacheName).has(`https://example.test/apps/prepfit/styles-${stylesheet}.css`));
+  }
 
   stores.set(`${prefix}old`, new Map());
   stores.set("another-app-cache", new Map());

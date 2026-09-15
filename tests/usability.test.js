@@ -7,7 +7,17 @@ const { RECIPES } = require("../recipe-data.js");
 
 const root = path.join(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
-const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+const css = [
+  "styles.css",
+  "styles-foundation.css",
+  "styles-layout.css",
+  "styles-components.css",
+  "styles-responsive.css",
+  "styles-print.css",
+  "styles-nutrition.css",
+]
+  .map((file) => fs.readFileSync(path.join(root, file), "utf8"))
+  .join("\n");
 
 assert.ok(html.indexOf('id="jump-to-plan"') < html.indexOf("<fieldset>"));
 assert.match(html, /Skip settings and view plan/);
