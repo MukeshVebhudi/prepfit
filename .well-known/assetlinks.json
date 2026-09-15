@@ -3,8 +3,10 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "app.prepfit.twa",
-      "sha256_cert_fingerprints": ["PLACEHOLDER_SHA256_FINGERPRINT"]
+      "package_name": "com.mukeshvebhudi.prepfit",
+      "sha256_cert_fingerprints": [
+        "F5:5C:6E:23:D1:C3:36:5C:F7:0A:C9:BD:0B:FD:65:51:C2:82:92:D3:4B:6C:5E:93:AF:3A:2A:D3:7C:D2:86:C5"
+      ]
     }
   }
 ]

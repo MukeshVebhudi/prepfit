@@ -1,7 +1,7 @@
 export function parseJson(value) {
   try {
     return value ? JSON.parse(value) : null;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -23,7 +23,9 @@ export function createStorage(storage, reportError = () => {}) {
       return true;
     } catch (error) {
       console.warn(`PrepFit: could not save "${key}" locally.`, error);
-      reportError("Browser storage is unavailable. Your latest changes will be lost when this page closes.");
+      reportError(
+        "Browser storage is unavailable. Your latest changes will be lost when this page closes.",
+      );
       return false;
     }
   }

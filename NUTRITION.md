@@ -8,6 +8,10 @@ of a user's meal. This document describes the data and conversion rules; the use
 
 - `nutrition-data.js` supplies explicit reference amounts in **grams**, the four displayed nutrients,
   preparation states, selected household weights, source titles/URLs, and the date checked.
+- Every ingredient has a `source` object with a title, HTTPS URL, dataset or manufacturer label name,
+  and ISO date checked. USDA entries also record the numeric FoodData Central `fdcId`; manufacturer
+  entries omit that field because no FDC record is being claimed. `tests/data-integrity.test.js`
+  rejects missing or malformed provenance, including USDA URLs that do not match their recorded ID.
 - Generic food values were extracted from the official
   [USDA SR Legacy April 2018 JSON archive](https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_json_2018-04.zip),
   linked on the [USDA download page](https://fdc.nal.usda.gov/download-datasets/).
@@ -30,6 +34,11 @@ of a user's meal. This document describes the data and conversion rules; the use
   the numeric estimate uses the conservative lower bound zero and retains the exclusive upper bound
   in data. The UI explains that totals can undercount protein by less than 1 g per reference serving.
   No exact missing protein value is invented.
+
+The per-ingredient macro references are sourced values. Recipe combinations, serving sizes, blend
+ratios, cooking yields, target fitting, and totals scaled from those references are internal planning
+estimates. In particular, `INGREDIENT_BLENDS` describes authored component ratios rather than a
+commercial product analysis, and custom supplement values come only from the user's local entry.
 
 ## Conversion rules
 

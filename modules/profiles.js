@@ -1,8 +1,15 @@
 import { parseJson } from "./storage.js";
 
-export function createProfileStore({ storage, keys, dataTypes = ["settings", "planner", "favorites"] }) {
+export function createProfileStore({
+  storage,
+  keys,
+  dataTypes = ["settings", "planner", "favorites"],
+}) {
   function displayName(value) {
-    return String(value || "").trim().replace(/\s+/g, " ").slice(0, 24);
+    return String(value || "")
+      .trim()
+      .replace(/\s+/g, " ")
+      .slice(0, 24);
   }
 
   function isReservedId(id) {
@@ -17,7 +24,7 @@ export function createProfileStore({ storage, keys, dataTypes = ["settings", "pl
     const saved = parseJson(storage.get(keys.accounts));
     if (!saved || typeof saved !== "object" || Array.isArray(saved)) return Object.create(null);
     return Object.entries(saved).reduce((accounts, [key, profile]) => {
-      if (!profile || typeof profile !== "object") return accounts;
+      if (!profile || typeof profile !== "object" || Array.isArray(profile)) return accounts;
       const id = String(profile.id || key);
       accounts[id] = {
         id,
@@ -34,9 +41,14 @@ export function createProfileStore({ storage, keys, dataTypes = ["settings", "pl
   }
 
   function uniqueId(name, profiles, prefix = "profile") {
-    const slug = String(name || "profile").toLowerCase().normalize("NFKD")
-      .replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "").slice(0, 32) || "profile";
+    const slug =
+      String(name || "profile")
+        .toLowerCase()
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 32) || "profile";
     let id = `${prefix}:${slug}`;
     let suffix = 2;
     while (Object.prototype.hasOwnProperty.call(profiles, id) || isReservedId(id)) {
@@ -48,8 +60,10 @@ export function createProfileStore({ storage, keys, dataTypes = ["settings", "pl
 
   function nameExists(profiles, name, ignoredId = null) {
     const normalized = displayName(name).toLowerCase();
-    return Object.values(profiles).some((profile) =>
-      profile.id !== ignoredId && displayName(profile.name).toLowerCase() === normalized);
+    return Object.values(profiles).some(
+      (profile) =>
+        profile.id !== ignoredId && displayName(profile.name).toLowerCase() === normalized,
+    );
   }
 
   function copyData(fromId, toId) {
@@ -75,7 +89,10 @@ export function createProfileStore({ storage, keys, dataTypes = ["settings", "pl
     const idChanges = new Map();
     let changed = false;
     Object.entries(raw).forEach(([key, legacy]) => {
-      if (!legacy || typeof legacy !== "object") { changed = true; return; }
+      if (!legacy || typeof legacy !== "object" || Array.isArray(legacy)) {
+        changed = true;
+        return;
+      }
       const oldId = String(legacy.id || key);
       const name = displayName(legacy.name || legacy.email || oldId) || "Local profile";
       const needsSafeId = isReservedId(oldId) && oldId !== "guest";
@@ -86,8 +103,12 @@ export function createProfileStore({ storage, keys, dataTypes = ["settings", "pl
         changed = true;
       }
       if (legacy.passcodeHash || legacy.email || legacy.provider) changed = true;
-      migrated[id] = { id, name, createdAt: legacy.createdAt || new Date().toISOString(),
-        ...(oldId === "guest" || legacy.guest ? { guest: true } : {}) };
+      migrated[id] = {
+        id,
+        name,
+        createdAt: legacy.createdAt || new Date().toISOString(),
+        ...(oldId === "guest" || legacy.guest ? { guest: true } : {}),
+      };
     });
     if (changed && save(migrated)) {
       const currentId = storage.get(keys.currentAccount);
@@ -95,5 +116,16 @@ export function createProfileStore({ storage, keys, dataTypes = ["settings", "pl
     }
   }
 
-  return { copyData, dataKey, displayName, isReservedId, load, migrateLegacy, nameExists, removeData, save, uniqueId };
+  return {
+    copyData,
+    dataKey,
+    displayName,
+    isReservedId,
+    load,
+    migrateLegacy,
+    nameExists,
+    removeData,
+    save,
+    uniqueId,
+  };
 }

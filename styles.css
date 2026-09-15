@@ -1339,7 +1339,7 @@ body[data-theme="evening"] .meal-icon {
     justify-content: center;
     min-height: var(--tap);
     padding: 0.65rem 0.8rem;
-    color: #fff;
+    color: var(--bg-strong);
     background: var(--accent-strong);
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow-soft);

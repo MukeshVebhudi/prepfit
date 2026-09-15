@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v16";
+const CACHE_VERSION = "v18";
 const SCOPE_URL = new URL(self.registration.scope);
 const CACHE_PREFIX = `prepfit-static:${encodeURIComponent(SCOPE_URL.pathname)}:`;
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
@@ -19,6 +19,7 @@ const APP_SHELL = [
   "./modules/profiles.js",
   "./modules/persistence.js",
   "./modules/render.js",
+  "./modules/diagnostics.js",
   "./manifest.webmanifest",
   "./assets/prepfit-icon.svg",
 ].map((path) => new URL(path, SCOPE_URL).href);
@@ -63,7 +64,7 @@ async function networkFirstPage(request) {
     const response = await fetch(request);
     if (response.ok && response.type !== "opaque") await cache.put(request, response.clone());
     return response;
-  } catch (error) {
+  } catch {
     const cached = await cache.match(request);
     const fallback = await cache.match(FALLBACK_URL);
     return cached || fallback || Response.error();

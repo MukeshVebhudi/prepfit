@@ -3,7 +3,7 @@ const live = process.env.PREPFIT_LIVE === "1";
 
 module.exports = defineConfig({
   testDir: "./tests/browser",
-  testMatch: live ? "live.spec.js" : "app.spec.js",
+  testMatch: live ? "live.spec.js" : ["app.spec.js", "accessibility.spec.js"],
   fullyParallel: false,
   workers: 1,
   timeout: 90_000,

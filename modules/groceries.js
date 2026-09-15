@@ -10,17 +10,37 @@ export function createGroceryTools({
 }) {
   function normalizeUnit(unit) {
     const normalized = String(unit || "").toLowerCase();
-    return { cups: "cup", cloves: "clove", slices: "slice", cans: "can", scoops: "scoop" }[normalized]
-      || normalized;
+    return (
+      { cups: "cup", cloves: "clove", slices: "slice", cans: "can", scoops: "scoop" }[normalized] ||
+      normalized
+    );
   }
 
   function displayUnit(unit, amount) {
     if (Math.abs(amount - 1) < 0.001) return unit;
-    return {
-      cup: "cups", clove: "cloves", slice: "slices", can: "cans", scoop: "scoops",
-      bag: "bags", bottle: "bottles", box: "boxes", jar: "jars", pack: "packs",
-      count: "count", tbsp: "tbsp", tsp: "tsp", oz: "oz", g: "g", kg: "kg", lb: "lb", ml: "ml", l: "l",
-    }[unit] || unit;
+    return (
+      {
+        cup: "cups",
+        clove: "cloves",
+        slice: "slices",
+        can: "cans",
+        scoop: "scoops",
+        bag: "bags",
+        bottle: "bottles",
+        box: "boxes",
+        jar: "jars",
+        pack: "packs",
+        count: "count",
+        tbsp: "tbsp",
+        tsp: "tsp",
+        oz: "oz",
+        g: "g",
+        kg: "kg",
+        lb: "lb",
+        ml: "ml",
+        l: "l",
+      }[unit] || unit
+    );
   }
 
   function formatAmount(value) {
@@ -30,8 +50,10 @@ export function createGroceryTools({
 
   function formatIngredient(ingredient, multiplier) {
     const amount = ingredient.amount * multiplier;
-    if (ingredient.manual) return `${formatAmount(amount)} ${displayUnit(normalizeUnit(ingredient.unit), amount)} ${ingredient.name}`;
-    if (ingredient.customSupplement) return `${formatAmount(amount)} g ${ingredient.name} (use product label)`;
+    if (ingredient.manual)
+      return `${formatAmount(amount)} ${displayUnit(normalizeUnit(ingredient.unit), amount)} ${ingredient.name}`;
+    if (ingredient.customSupplement)
+      return `${formatAmount(amount)} g ${ingredient.name} (use product label)`;
     const grams = ingredientGrams({ ...ingredient, amount });
     const unit = nutritionUnit(ingredient.unit);
     const quantity = `${formatAmount(amount)} ${displayUnit(unit, amount)}`;
@@ -42,14 +64,20 @@ export function createGroceryTools({
 
   function marketHint(ingredient) {
     if (ingredient.manual) return "Custom shopping item.";
-    if (ingredient.customSupplement) return "Buy enough product for the configured daily weight; verify its label and allergen statement.";
+    if (ingredient.customSupplement)
+      return "Buy enough product for the configured daily weight; verify its label and allergen statement.";
     const reference = nutrition[ingredient.name];
     if (reference.preparation.startsWith("cooked")) {
       return "Cook enough to yield this cooked weight, or buy ready-cooked. Raw/dry purchase weight depends on cooking yield.";
     }
-    if (ingredient.name === "canned tuna") return "Required drained weight. Compare the drained grams on your can; can sizes vary.";
-    if (ingredient.name === "protein pasta") return "Buy this dry weight; nutrition uses Barilla Protein+ Penne.";
-    return reference.note || "Use the preparation state shown; compare packaged products with the reference nutrition.";
+    if (ingredient.name === "canned tuna")
+      return "Required drained weight. Compare the drained grams on your can; can sizes vary.";
+    if (ingredient.name === "protein pasta")
+      return "Buy this dry weight; nutrition uses Barilla Protein+ Penne.";
+    return (
+      reference.note ||
+      "Use the preparation state shown; compare packaged products with the reference nutrition."
+    );
   }
 
   function groceryItemKey(item) {
@@ -90,13 +118,18 @@ export function createGroceryTools({
       const amount = (Number(settings.supplementAmount) || 0) * people;
       if (!amount) return;
       const current = map.get(name) || {
-        name, unit: "g", amount: 0, preparation: "use product label", category: "Pantry",
+        name,
+        unit: "g",
+        amount: 0,
+        preparation: "use product label",
+        category: "Pantry",
         customSupplement: true,
       };
       current.amount += amount;
       map.set(name, current);
     }
-    const settings = typeof supplement === "number" ? { powderProtein: supplement } : (supplement || {});
+    const settings =
+      typeof supplement === "number" ? { powderProtein: supplement } : supplement || {};
     days.forEach((day) => {
       day.meals.filter((meal) => !meal.removed).forEach((meal) => meal.ingredients.forEach(add));
       if (settings.powderProtein) {
@@ -111,21 +144,36 @@ export function createGroceryTools({
   }
 
   function combineGroceries(generated, manualItems) {
-    return [...generated, ...manualItems.map((item) => ({
-      ...item, manual: true, category: "Other", preparation: "manual item",
-    }))];
+    return [
+      ...generated,
+      ...manualItems.map((item) => ({
+        ...item,
+        manual: true,
+        category: "Other",
+        preparation: "manual item",
+      })),
+    ];
   }
 
   function groceryText(groceries, purchases = new Map(), pantry = new Set()) {
     const groups = groupBy(groceries, "category");
-    return categories.filter((category) => groups[category]?.length).map((category) => {
-      const lines = groups[category].map((item) => {
-        const key = groceryItemKey(item);
-        const marker = pantry.has(key) ? "[pantry]" : purchases.get(key) === groceryQuantitySignature(item) ? "[x]" : "[ ]";
-        return `${marker} ${formatIngredient(item, 1)} (${marketHint(item)})`;
-      }).join("\n");
-      return `${category}\n${lines}`;
-    }).join("\n\n");
+    return categories
+      .filter((category) => groups[category]?.length)
+      .map((category) => {
+        const lines = groups[category]
+          .map((item) => {
+            const key = groceryItemKey(item);
+            const marker = pantry.has(key)
+              ? "[pantry]"
+              : purchases.get(key) === groceryQuantitySignature(item)
+                ? "[x]"
+                : "[ ]";
+            return `${marker} ${formatIngredient(item, 1)} (${marketHint(item)})`;
+          })
+          .join("\n");
+        return `${category}\n${lines}`;
+      })
+      .join("\n\n");
   }
 
   return {

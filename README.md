@@ -196,24 +196,76 @@ every push and pull request. The production app still has no npm package or buil
 
 ## Release readiness
 
-**Codebase rating: 9.2/10. Web release readiness: 9.5/10 — deployed and verified for public beta.**
+Current status is recorded as reproducible checks rather than a numeric self-assessment.
 
-The September 10, 2026 release suite passes locally and in GitHub Actions. It covers all original repair areas: mandatory
-dietary filtering, unit-aware nutrition, multi-target planning, exact persistence, local-profile
-migration, scoped offline caching, accessibility structure, food-safety copy, and the Java server.
-A headless Chromium journey also passes guest entry, vegetarian and ingredient exclusions,
-generation, swap, favorite, grocery checkoff, reload, guest conversion, offline revisit, text
-download, and print. The deployed PWA at `https://mukeshvebhudi.github.io/prepfit/` passes its live
-HTTPS subdirectory, manifest, service-worker scope, storage persistence, and offline-launch test.
+**Test-verified:**
 
-Before calling the Android wrapper or nutrition experience production-ready:
+- `bash scripts/check.sh` covers mandatory dietary filtering, unit-aware nutrition, multi-target
+  planning, exact persistence, local-profile migration, scoped offline caching, structural
+  accessibility checks, food-safety copy, and the Java server.
+- `npm run test:browser` covers guest entry, restrictions, generation, direct meal editing,
+  groceries, reload, profile conversion, download, print preparation, mobile overflow, and an
+  offline revisit in Chromium.
+- `npm run test:live` covers the deployed HTTPS subdirectory, manifest identity and scope,
+  service-worker control, saved-setting reload, and offline relaunch.
+- GitHub Actions runs the release and Chromium suites for pull requests and `main`.
 
-- Test installation and an offline launch on a physical Android device.
-- Replace the Digital Asset Links signing fingerprint placeholder before building a Trusted Web
-  Activity.
-- Treat nutrition as planning estimates based on the documented references, not medical advice or
-  a substitute for packaged-food labels.
-- Remember that profiles are local browser organization without authentication, backup, or sync.
+**Manually verified:**
+
+- The deployed GitHub Pages app opens in desktop Chrome at
+  `https://mukeshvebhudi.github.io/prepfit/` after deployment.
+- The generated Android wrapper builds both a release-signed APK and an Android App Bundle locally.
+- Android `apksigner` verifies the APK with v1, v2, and v3 signatures and confirms the certificate
+  SHA-256 digest recorded in `.well-known/assetlinks.json`.
+
+**Outstanding:**
+
+- Install and launch the deployed PWA offline on a physical Android device.
+- Back up the production signing keystore and its password in an owner-controlled secure location;
+  neither file is tracked by Git.
+- Device-test the release-signed Android package, then complete Play Console validation and
+  publishing with the owner's account.
+- Treat nutrition values as planning estimates based on documented references, not medical advice
+  or a substitute for packaged-food labels.
+- Profiles remain local browser organization without authentication, backup, or sync.
+
+### External review progress
+
+- [x] 1. Expand the formatting gate to runtime and data sources
+- [x] 2. Strengthen runtime lint rules
+- [x] 3. Replace numeric self-grading with falsifiable release status
+- [ ] 4. Close Android signing and physical-device verification (signing complete; device test blocked
+      because no phone is connected)
+- [x] 5. Decompose large rendering templates without output changes
+- [x] 6. Add the corrupted-storage test matrix
+- [x] 7. Record nutrition data provenance per ingredient
+- [x] 8. Add a privacy-respecting local diagnostic export
+- [x] 9. Run automated axe accessibility audits and resolve findings
+
+Step 5 split meal headers, nutrition, recipe bodies, actions, day cards, grocery categories, and
+grocery rows into named rendering helpers. A deterministic pre/post Chromium comparison produced
+identical meal-plan and grocery-list HTML, followed by the complete release and browser suites.
+
+Step 6 rejects malformed settings, planner, grocery, and legacy-profile containers before migration
+or object spreading. Truncated JSON, wrong root and nested types, missing keys, and unavailable
+storage fall back to first-run defaults or a fresh plan without throwing; valid v1 records still
+migrate to the v2 grocery shape.
+
+Step 7 audited all 82 nutrition entries: every entry records a source title, HTTPS URL, dataset or
+manufacturer reference, and checked date; 77 USDA entries also record an FDC ID. Data-integrity
+checks now enforce that contract and `NUTRITION.md` distinguishes sourced ingredient values from
+authored recipe ratios, cooking assumptions, target fitting, and user-entered supplement estimates.
+
+Step 8 adds a local **Copy debug info** action beside plan settings. Its versioned JSON output
+contains storage availability, quota estimates, schema presence, record counts, and feature support
+only. It makes no network request and excludes storage keys, profile identifiers, settings values,
+meal plans, groceries, favorites, browser identity, and other personal data. Automated tests cover
+normal, denied-storage, and rejected-quota paths.
+
+Step 9 adds a pinned axe-core Playwright audit of the generated planner at 1440×1000 and 390×844
+in both daylight and evening themes. The audit checks the full axe ruleset, including WCAG color
+contrast and document structure. It found and fixed the evening mobile plan-shortcut contrast; all
+four configurations now pass with no known axe violations.
 
 Manual browser checklist for future releases:
 
@@ -483,9 +535,9 @@ seven-day coverage artifact, and runs Chromium only after the faster quality job
 Pull request #2 deployed the verified application from `main` to
 `https://mukeshvebhudi.github.io/prepfit/`. GitHub Pages build `34446561101` passed, and the live
 Playwright check passed the `/prepfit/` URL boundary, relative manifest identity/start/scope,
-scoped service-worker controller, saved-setting reload, and offline relaunch. Remaining Android work
-requires the owner to create and protect a signing key, replace the Digital Asset Links fingerprint,
-test installation on a physical device, and publish through Play Console.
+scoped service-worker controller, saved-setting reload, and offline relaunch. A release signing key
+and matching Digital Asset Links fingerprint were added September 14, 2026; physical-device and Play
+Console verification remain outstanding.
 
 Add lightweight formatting, linting, coverage reporting, and static-document validation. Then deploy
 the PWA to its intended HTTPS subdirectory and verify the live installation boundary. Android signing
@@ -505,9 +557,8 @@ pinned formatting, linting, coverage reporting, and static HTML/manifest/asset
 validation to the release command and GitHub Actions. Fix actionable findings.
 Prepare and verify deployment at the intended HTTPS subdirectory, including live
 manifest paths, service-worker updates, offline launch, and saved-data persistence.
-Do not create signing keys, publish to Google Play, or replace owner credentials.
-Record CI and live-site evidence, remaining Android work, and an updated codebase
-and release-readiness rating.
+Keep signing keys and owner credentials outside Git, and do not publish to Google Play without the
+owner's explicit release approval. Record CI and live-site evidence plus remaining Android work.
 ```
 
 ## Publish to Google Play
@@ -531,15 +582,17 @@ can be automated here).
    ```bash
    npx @bubblewrap/cli build
    ```
-   This creates a release keystore (back it up — losing it means you can't update the app later) and
-   produces an `app-release-bundle.aab`.
+   The local wrapper uses the untracked `android.keystore` alias `prepfit` and produces
+   `app-release-signed.apk` plus `app-release-bundle.aab`. Back up the keystore and password; losing
+   them prevents signing future updates with the same identity.
 4. **Verify domain ownership.** Get the release key's SHA-256 fingerprint:
    ```bash
-   keytool -list -v -keystore android.keystore -alias android
+   keytool -list -v -keystore android.keystore -alias prepfit
    ```
-   Put it into `.well-known/assetlinks.json` in this repo (a placeholder is already checked in),
-   replacing `PLACEHOLDER_SHA256_FINGERPRINT`, then redeploy so it's live at
-   `https://mukeshvebhudi.github.io/prepfit/.well-known/assetlinks.json`. Without this file matching,
-   the installed app shows browser UI instead of a full-screen native experience.
+   The checked-in association uses package `com.mukeshvebhudi.prepfit` and the production
+   certificate's SHA-256 fingerprint. Redeploy it so the matching file is live at
+   `https://mukeshvebhudi.github.io/prepfit/.well-known/assetlinks.json`. If the package or
+   certificate differs, the installed app shows browser UI instead of a full-screen native
+   experience.
 5. **Upload to Play Console.** Create an app listing at [play.google.com/console](https://play.google.com/console)
    and upload the `.aab` from step 3. This step requires your own developer account.
