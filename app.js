@@ -7,11 +7,13 @@ import { createProfileStore } from "./modules/profiles.js";
 import { createPersistence } from "./modules/persistence.js";
 import { createRenderer } from "./modules/render.js";
 import { createDebugInfo } from "./modules/diagnostics.js";
+import { loadUnitSystem, saveUnitSystem } from "./modules/units.js";
 
 const STORAGE_KEYS = {
   settings: "prepfit-settings-v2",
   favorites: "prepfit-favorites",
   theme: "prepfit-theme",
+  units: "prepfit-units",
   accounts: "prepfit-accounts-v1",
   currentAccount: "prepfit-current-account-v1",
 };
@@ -68,6 +70,7 @@ const dom = {
   planStatus: document.querySelector("#plan-status"),
   undoPlanEdit: document.querySelector("#undo-plan-edit"),
   themeToggle: document.querySelector("#theme-toggle"),
+  unitToggle: document.querySelector("#unit-toggle"),
   randomize: document.querySelector("#randomize"),
   printPlan: document.querySelector("#print-plan"),
   downloadPlan: document.querySelector("#download-plan"),
@@ -104,6 +107,7 @@ let manualGroceries = [];
 let editingManualId = null;
 let mealEditSnapshot = null;
 let storageMessage = "";
+let unitSystem = "metric";
 
 const browserStorage = globalThis.localStorage || {
   getItem: () => null,
@@ -148,6 +152,7 @@ const {
   ingredientGrams,
   nutritionUnit,
   supplementalPowderIngredient,
+  getUnitSystem: () => unitSystem,
 });
 const exporter = createExporter({ document, navigator: globalThis.navigator || {} });
 const {
@@ -207,6 +212,7 @@ initialize();
 
 function initialize() {
   applyTheme(loadTheme());
+  applyUnitSystem(loadUnitSystem(storage, STORAGE_KEYS.units));
   migrateLegacyProfiles();
   bindEvents();
   restoreSession();
@@ -260,6 +266,7 @@ function bindEvents() {
   dom.manualGroceryCancel.addEventListener("click", cancelManualGroceryEdit);
   dom.randomize.addEventListener("click", () => generatePlan({ shuffle: true }));
   dom.themeToggle.addEventListener("click", toggleTheme);
+  dom.unitToggle.addEventListener("click", toggleUnitSystem);
   dom.printPlan.addEventListener("click", () => window.print());
   dom.downloadPlan.addEventListener("click", downloadPlan);
   dom.copyGroceries.addEventListener("click", copyGroceries);
@@ -1030,6 +1037,25 @@ function loadTheme() {
   if (saved === "morning" || saved === "evening") return saved;
   const hour = new Date().getHours();
   return hour >= 6 && hour < 18 ? "morning" : "evening";
+}
+
+function toggleUnitSystem() {
+  applyUnitSystem(unitSystem === "metric" ? "imperial" : "metric");
+  saveUnitSystem(storage, STORAGE_KEYS.units, unitSystem);
+  if (!state) return;
+  lastGroceryText = groceryText(state.groceries, purchasedItems, pantryItems);
+  renderMeals(state.plan, state.settings);
+  renderGroceries(state.groceries);
+}
+
+function applyUnitSystem(value) {
+  unitSystem = value === "imperial" ? "imperial" : "metric";
+  dom.unitToggle.textContent = unitSystem === "metric" ? "Metric" : "Imperial";
+  dom.unitToggle.setAttribute("aria-pressed", String(unitSystem === "imperial"));
+  dom.unitToggle.setAttribute(
+    "aria-label",
+    `Switch to ${unitSystem === "metric" ? "imperial" : "metric"} units`,
+  );
 }
 
 function readSettingsNoSave() {

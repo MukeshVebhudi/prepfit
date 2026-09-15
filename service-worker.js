@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v19";
+const CACHE_VERSION = "v20";
 const SCOPE_URL = new URL(self.registration.scope);
 const CACHE_PREFIX = `prepfit-static:${encodeURIComponent(SCOPE_URL.pathname)}:`;
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
@@ -20,6 +20,7 @@ const APP_SHELL = [
   "./modules/persistence.js",
   "./modules/render.js",
   "./modules/diagnostics.js",
+  "./modules/units.js",
   "./manifest.webmanifest",
   "./assets/prepfit-icon.svg",
 ].map((path) => new URL(path, SCOPE_URL).href);
