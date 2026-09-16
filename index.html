@@ -152,26 +152,28 @@
                 <label><input type="radio" name="meat" value="vegetarian" /><span>Vegetarian</span></label>
               </div>
             </div>
-            <label class="field">
-              <span>Cuisine</span>
-              <select id="cuisine" name="cuisine">
-                <option value="random">Random</option>
-                <option value="american">American</option>
-                <option value="mexican">Mexican</option>
-                <option value="italian">Italian</option>
-                <option value="mediterranean">Mediterranean</option>
-                <option value="indian">Indian</option>
-                <option value="asian">Asian</option>
-              </select>
-            </label>
-            <label class="field">
-              <span>Budget mode</span>
-              <select id="budget" name="budget">
-                <option value="standard">Standard</option>
-                <option value="budget">Budget</option>
-                <option value="high-protein">High protein</option>
-              </select>
-            </label>
+            <div class="field-grid">
+              <label class="field">
+                <span>Cuisine</span>
+                <select id="cuisine" name="cuisine">
+                  <option value="random">Random</option>
+                  <option value="american">American</option>
+                  <option value="mexican">Mexican</option>
+                  <option value="italian">Italian</option>
+                  <option value="mediterranean">Mediterranean</option>
+                  <option value="indian">Indian</option>
+                  <option value="asian">Asian</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Budget mode</span>
+                <select id="budget" name="budget">
+                  <option value="standard">Standard</option>
+                  <option value="budget">Budget</option>
+                  <option value="high-protein">High protein</option>
+                </select>
+              </label>
+            </div>
             <label class="field">
               <span>Avoid ingredients</span>
               <input id="avoid-ingredients" name="avoidIngredients" type="text" placeholder="tofu, dairy, beans" autocomplete="off" aria-describedby="avoid-help" />

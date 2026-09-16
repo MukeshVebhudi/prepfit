@@ -86,16 +86,12 @@
     border-radius: 15px;
   }
 
-  .header-actions,
-  .segmented,
-  .chip-grid,
-  .field-grid,
-  .stat-grid {
-    grid-template-columns: 1fr;
+  .subtitle {
+    display: none;
   }
 
-  .chip-grid label:last-child {
-    grid-column: auto;
+  .stat-grid {
+    grid-template-columns: 1fr;
   }
 
   .card-heading,
@@ -105,8 +101,29 @@
     gap: 0.45rem;
   }
 
+  .header-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+    margin-inline: -0.75rem;
+    padding-inline: 0.75rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .header-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .header-actions > * {
+    flex: 0 0 auto;
+  }
+
   .header-actions button {
-    padding-inline: 0.55rem;
+    padding-inline: 0.7rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
   }
 
   .panel,
