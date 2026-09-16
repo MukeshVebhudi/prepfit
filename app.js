@@ -64,6 +64,7 @@ const dom = {
   mealPlan: document.querySelector("#meal-plan"),
   groceryList: document.querySelector("#grocery-list"),
   prepSchedule: document.querySelector("#prep-schedule"),
+  togglePrepSchedule: document.querySelector("#toggle-prep-schedule"),
   favoritesList: document.querySelector("#favorites-list"),
   summaryTitle: document.querySelector("#summary-title"),
   summaryText: document.querySelector("#summary-text"),
@@ -273,6 +274,7 @@ function bindEvents() {
   dom.downloadPlan.addEventListener("click", downloadPlan);
   dom.copyGroceries.addEventListener("click", copyGroceries);
   dom.copyDebugInfo.addEventListener("click", copyDebugInfo);
+  dom.togglePrepSchedule.addEventListener("click", togglePrepScheduleVisibility);
   dom.resetPlan.addEventListener("click", resetSettings);
   dom.clearFavorites.addEventListener("click", clearFavorites);
   dom.authForm.addEventListener("submit", handleAuthSubmit);
@@ -291,6 +293,10 @@ function openRecipeDetailsForPrint() {
       details.dataset.openedForPrint = "true";
       details.open = true;
     });
+  if (dom.prepSchedule.hidden) {
+    dom.prepSchedule.dataset.hiddenForPrint = "true";
+    dom.prepSchedule.hidden = false;
+  }
 }
 
 function restoreRecipeDetailsAfterPrint() {
@@ -302,6 +308,17 @@ function restoreRecipeDetailsAfterPrint() {
       details.open = false;
       delete details.dataset.openedForPrint;
     });
+  if (dom.prepSchedule.dataset.hiddenForPrint) {
+    dom.prepSchedule.hidden = true;
+    delete dom.prepSchedule.dataset.hiddenForPrint;
+  }
+}
+
+function togglePrepScheduleVisibility() {
+  const willShow = dom.prepSchedule.hidden;
+  dom.prepSchedule.hidden = !willShow;
+  dom.togglePrepSchedule.textContent = willShow ? "Hide" : "Show";
+  dom.togglePrepSchedule.setAttribute("aria-expanded", String(willShow));
 }
 
 function restoreSession() {
