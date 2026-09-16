@@ -82,15 +82,17 @@
                 <span>Weekly</span>
               </label>
             </div>
-            <label class="field">
-              <span id="goal-label">Protein per person per day</span>
-              <input id="protein-goal" name="proteinGoal" type="number" min="40" max="320" step="5" value="150" aria-describedby="protein-help" />
-            </label>
+            <div class="field-grid">
+              <label class="field">
+                <span id="goal-label">Protein per person per day</span>
+                <input id="protein-goal" name="proteinGoal" type="number" min="40" max="320" step="5" value="150" aria-describedby="protein-help" />
+              </label>
+              <label class="field">
+                <span>Supplemental whey protein grams/day</span>
+                <input id="powder-protein" name="powderProtein" type="number" min="0" max="140" step="5" value="0" />
+              </label>
+            </div>
             <p id="protein-help" class="auth-hint">Allowed range: 40–320g/day.</p>
-            <label class="field">
-              <span>Supplemental whey protein grams/day</span>
-              <input id="powder-protein" name="powderProtein" type="number" min="0" max="140" step="5" value="0" />
-            </label>
             <details class="supplement-settings">
               <summary>Customize supplement nutrition</summary>
               <label class="field">
