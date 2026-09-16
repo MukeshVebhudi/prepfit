@@ -31,7 +31,7 @@ export function createExporter({
           .map((meal) =>
             meal.removed
               ? `  ${meal.label}: Removed`
-              : `  ${meal.label}: ${meal.name} (${Math.round(meal.macros.protein)}g protein)`,
+              : `  ${meal.label}: ${meal.name} (${Math.round(meal.macros.protein)}g protein, ${Math.round(meal.macros.fiber)}g fiber, ${Math.round(meal.macros.sodium)}mg sodium)`,
           )
           .join("\n");
         return `Day ${day.day}\n${meals}`;

@@ -1127,11 +1127,13 @@ function addMacros(a, b) {
     calories: a.calories + b.calories,
     carbs: a.carbs + b.carbs,
     fat: a.fat + b.fat,
+    fiber: a.fiber + b.fiber,
+    sodium: a.sodium + b.sodium,
   };
 }
 
 function emptyMacros() {
-  return { protein: 0, calories: 0, carbs: 0, fat: 0 };
+  return { protein: 0, calories: 0, carbs: 0, fat: 0, fiber: 0, sodium: 0 };
 }
 
 const RECIPES = buildRecipeLibrary();

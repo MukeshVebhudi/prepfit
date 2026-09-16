@@ -6,7 +6,7 @@ function read(root, file) {
 }
 
 function loadAppSources(root) {
-  const modules = ["modules/utils.js", "modules/storage.js", "modules/groceries.js", "modules/export.js", "modules/planner.js", "modules/profiles.js", "modules/persistence.js", "modules/render.js", "modules/diagnostics.js"].map((file) =>
+  const modules = ["modules/utils.js", "modules/storage.js", "modules/units.js", "modules/groceries.js", "modules/export.js", "modules/planner.js", "modules/profiles.js", "modules/persistence.js", "modules/render.js", "modules/diagnostics.js"].map((file) =>
     read(root, file).replace(/^import.*\n/gm, "").replace(/^export\s+/gm, ""));
   const app = read(root, "app.js")
     .replace(/^import[\s\S]*?from\s+"[^"]+";\n/gm, "")

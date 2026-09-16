@@ -31,7 +31,9 @@ for (const [name, ref] of Object.entries(NUTRITION)) {
     assert.ok(record, name);
     assert.equal(ref.reference.amount, 100);
     assert.equal(ref.source.title, record.description);
-    for (const [key, id] of Object.entries({ protein: 1003, calories: 1008, carbs: 1005, fat: 1004 })) {
+    const nutrients = { protein: 1003, calories: 1008, carbs: 1005, fat: 1004, sodium: 1093 };
+    if (name !== 'tempeh') nutrients.fiber = 1079;
+    for (const [key, id] of Object.entries(nutrients)) {
       assert.equal(ref.macros[key], record.nutrients[id], `${name} must match USDA ${id}`);
     }
   }
@@ -75,6 +77,13 @@ macros(macrosForIngredient(ingredient('Alfredo sauce', 0.25, 'cup')),
 macros(macrosForIngredient(ingredient('tikka masala sauce', 0.25, 'cup')),
   { protein: 0, calories: 40, carbs: 5, fat: 2 }, 'Pataks protein lower bound');
 assert.equal(NUTRITION['tikka masala sauce'].bounds.protein.maxExclusive, 1);
+assert.equal(NUTRITION['tikka masala sauce'].macros.fiber, 0);
+assert.equal(NUTRITION['tikka masala sauce'].macros.sodium, 180);
+assert.equal(NUTRITION['curry simmer sauce'].macros.fiber, 1);
+assert.equal(NUTRITION['protein pasta'].macros.fiber, 4);
+assert.equal(NUTRITION['Alfredo sauce'].macros.sodium, 320);
+near(NUTRITION.tempeh.macros.fiber, 6 / 84 * 100, 'tempeh label fiber');
+assert.equal(NUTRITION.tempeh.fiberSource.serving, '6 g fiber per 84 g');
 
 // Whole plate independently summed from FDC 171477, 168878 and 170379:
 // 100g cooked chicken + 158g cooked rice + 91g raw broccoli.

@@ -19,6 +19,18 @@ for (const [ingredient, reference] of Object.entries(NUTRITION)) {
     assert.ok(Number.isInteger(source.fdcId) && source.fdcId > 0, `${ingredient}: FDC ID`);
     assert.match(source.url, new RegExp(`/food-details/${source.fdcId}/`), `${ingredient}: FDC URL`);
   }
+  assert.ok(
+    Number.isFinite(reference.macros.fiber) &&
+      reference.macros.fiber >= 0 &&
+      reference.macros.fiber <= 50,
+    `${ingredient}: fiber range`,
+  );
+  assert.ok(
+    Number.isFinite(reference.macros.sodium) &&
+      reference.macros.sodium >= 0 &&
+      reference.macros.sodium <= 40000,
+    `${ingredient}: sodium range`,
+  );
 }
 
 if (issues.missingMacros.length) {
@@ -39,6 +51,14 @@ for (const key of ["duplicateIds", "invalidFields", "invalidUnits", "invalidNutr
 }
 
 const allRecipes = Object.values(RECIPES).flat();
+const usedIngredients = new Set(
+  allRecipes.flatMap((recipe) => recipe.ingredients.map((ingredient) => ingredient.name)),
+);
+assert.equal(
+  [...usedIngredients].filter((ingredient) => !NUTRITION[ingredient]).length,
+  0,
+  "every recipe ingredient must have a sourced nutrition entry",
+);
 assert.equal(new Set(allRecipes.map((recipe) => recipe.id)).size, allRecipes.length);
 for (const recipe of allRecipes) {
   const expectedAllergens = [...new Set(recipe.ingredients.flatMap((ingredient) =>

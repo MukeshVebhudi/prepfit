@@ -25,6 +25,40 @@ test("number settings allow normal replacement typing", async ({ page }) => {
   await expect(debugButton).toHaveText("Copied");
 });
 
+test("unit preference converts display and export without changing plan data", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Continue as guest" }).click();
+  const recipeItem = page.locator("#meal-plan .meal-card li").first();
+  const groceryItem = page.locator("#grocery-list strong").first();
+  await expect(recipeItem).toContainText(/\b(?:g|kg)\b/);
+  await expect(groceryItem).toContainText(/\b(?:g|kg)\b/);
+
+  await page.locator("#unit-toggle").click();
+  await expect(recipeItem).toContainText(/\b(?:oz|lb)\b/);
+  await expect(groceryItem).toContainText(/\b(?:oz|lb)\b/);
+  expect(await page.evaluate(() => localStorage.getItem("prepfit-units"))).toBe("imperial");
+
+  const planBeforeReload = await page.evaluate(() => {
+    const key = Object.keys(localStorage).find((candidate) => candidate.endsWith(":planner"));
+    return { key, value: localStorage.getItem(key) };
+  });
+  await page.reload();
+  await expect(page.locator("#unit-toggle")).toHaveText("Imperial");
+  expect(await page.evaluate((key) => localStorage.getItem(key), planBeforeReload.key)).toBe(
+    planBeforeReload.value,
+  );
+  await expect(page.locator("#meal-plan .meal-card li").first()).toContainText(/\b(?:oz|lb)\b/);
+
+  const downloadEvent = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download" }).click();
+  const download = await downloadEvent;
+  const contents = await require("node:fs/promises").readFile(await download.path(), "utf8");
+  expect(contents).toMatch(/\b(?:oz|lb)\b/);
+
+  await page.emulateMedia({ media: "print" });
+  await expect(page.locator("#meal-plan .meal-card li").first()).toContainText(/\b(?:oz|lb)\b/);
+});
+
 test("complete planning journey persists and works offline", async ({ page, context }, testInfo) => {
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));

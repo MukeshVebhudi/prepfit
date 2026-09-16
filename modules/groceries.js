@@ -1,4 +1,5 @@
 import { groupBy } from "./utils.js";
+import { displayMass, massInGrams } from "./units.js";
 
 export function createGroceryTools({
   categories,
@@ -7,6 +8,7 @@ export function createGroceryTools({
   ingredientGrams,
   nutritionUnit,
   supplementalPowderIngredient,
+  getUnitSystem = () => "metric",
 }) {
   function normalizeUnit(unit) {
     const normalized = String(unit || "").toLowerCase();
@@ -50,14 +52,21 @@ export function createGroceryTools({
 
   function formatIngredient(ingredient, multiplier) {
     const amount = ingredient.amount * multiplier;
-    if (ingredient.manual)
+    const unit = normalizeUnit(ingredient.unit);
+    if (ingredient.manual) {
+      if (["g", "kg", "oz", "lb"].includes(unit))
+        return `${displayMass(massInGrams(amount, unit), getUnitSystem(), formatAmount)} ${ingredient.name}`;
       return `${formatAmount(amount)} ${displayUnit(normalizeUnit(ingredient.unit), amount)} ${ingredient.name}`;
+    }
     if (ingredient.customSupplement)
-      return `${formatAmount(amount)} g ${ingredient.name} (use product label)`;
+      return `${displayMass(amount, getUnitSystem(), formatAmount)} ${ingredient.name} (use product label)`;
     const grams = ingredientGrams({ ...ingredient, amount });
-    const unit = nutritionUnit(ingredient.unit);
-    const quantity = `${formatAmount(amount)} ${displayUnit(unit, amount)}`;
-    const weight = unit === "g" ? "" : `; ${formatAmount(grams)} g`;
+    const normalizedUnit = nutritionUnit(ingredient.unit);
+    const isMass = ["g", "kg", "oz", "lb"].includes(normalizedUnit);
+    const quantity = isMass
+      ? displayMass(grams, getUnitSystem(), formatAmount)
+      : `${formatAmount(amount)} ${displayUnit(normalizedUnit, amount)}`;
+    const weight = isMass ? "" : `; ${displayMass(grams, getUnitSystem(), formatAmount)}`;
     const purpose = ingredient.componentOf ? `; for ${ingredient.componentOf}` : "";
     return `${quantity} ${ingredient.name} (${nutrition[ingredient.name].preparation}${weight}${purpose})`;
   }

@@ -79,13 +79,16 @@ check("supplement calories are included in daily macros", powderMacros.calories 
 const customSupplement = {
   ...achievable, dailyTarget: base.protein + 25, powderProtein: 25,
   supplementMode: "custom", supplementCalories: 160, supplementCarbs: 9, supplementFat: 4,
+  supplementFiber: 6, supplementSodium: 220,
 };
 const customMacros = math.macrosForDay(math.scaleMealsToTargets(meals, customSupplement), customSupplement);
 check("custom supplement label macros replace the whey reference",
   approx(math.supplementMacros(customSupplement).protein, 25, 0.001)
   && approx(math.supplementMacros(customSupplement).calories, 160, 0.001)
   && approx(math.supplementMacros(customSupplement).carbs, 9, 0.001)
-  && approx(math.supplementMacros(customSupplement).fat, 4, 0.001));
+  && approx(math.supplementMacros(customSupplement).fat, 4, 0.001)
+  && approx(math.supplementMacros(customSupplement).fiber, 6, 0.001)
+  && approx(math.supplementMacros(customSupplement).sodium, 220, 0.001));
 check("custom supplement is included in target fitting",
   math.targetResults(customMacros, customSupplement)[0].kind === "near");
 const boundedSupplement = math.supplementMacros({

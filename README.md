@@ -53,6 +53,9 @@ Then open:
 http://localhost:3000/
 ```
 
+See [Local server tradeoff](docs/LOCAL_SERVER.md) for why the repository currently keeps the Java
+server, the simpler alternatives, and the condition under which replacing it would make sense.
+
 ## Quality checks
 
 Install the pinned development tools with `npm ci`, then run:

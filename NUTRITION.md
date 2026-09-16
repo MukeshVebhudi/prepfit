@@ -6,7 +6,7 @@ of a user's meal. This document describes the data and conversion rules; the use
 
 ## Data and provenance
 
-- `nutrition-data.js` supplies explicit reference amounts in **grams**, the four displayed nutrients,
+- `nutrition-data.js` supplies explicit reference amounts in **grams**, the six displayed nutrients,
   preparation states, selected household weights, source titles/URLs, and the date checked.
 - Every ingredient has a `source` object with a title, HTTPS URL, dataset or manufacturer label name,
   and ISO date checked. USDA entries also record the numeric FoodData Central `fdcId`; manufacturer
@@ -25,6 +25,11 @@ of a user's meal. This document describes the data and conversion rules; the use
   and [RAGÚ Classic Alfredo](https://www.ragu.com/our-sauces/cheese-sauces/classic-alfredo-sauce/).
   Barilla's panel values also agree with the manufacturer-hosted nutrition iframe linked from its
   [current product page](https://www.barilla.com/en-us/products/pasta/protein-plus/proteinplus-penne).
+- Fiber and sodium were added from the same cited records and labels. The USDA SR Legacy archive
+  supplies sodium for all 74 selected records and fiber for 73. Its tempeh records omit fiber, so
+  that one value uses the [Lightlife Original Tempeh label](https://lightlife.com/product/original-tempeh/)
+  at 6 g per 84 g. The five manufacturer products retain their own panel values. Patak's Tikka
+  Masala reports fiber as less than 1 g per 64 g; PrepFit uses the conservative lower bound zero.
 - The unsupported “light Alfredo” estimate was replaced with a clearly identified Classic Alfredo
   reference. Its milk, egg, and soybean-oil ingredients are reflected in category exclusions.
 - Basmati uses a disclosed USDA cooked white long-grain rice proxy. Farro specifically means cooked
@@ -93,9 +98,11 @@ A lemon count represents 48 g of juice yielded, not the mass of an entire lemon.
 
 ## Verification and maintenance
 
-Fiber and sodium are not displayed because the current reference catalog does not contain validated
-values for every ingredient and preparation state. PrepFit will add those totals only after complete
-source coverage and unit validation; a partial total would be misleading.
+All 82 nutrition entries have source metadata and validated fiber and sodium values; all 75 distinct
+ingredients used by the 434 recipes resolve to those entries. Fiber is stored in grams and sodium in
+milligrams per reference serving. Per-meal and daily totals include both. Custom supplement mode
+accepts the user's label values for fiber and sodium, just as it does for the other displayed
+nutrients; zero remains the default for older saved settings.
 
 Run:
 

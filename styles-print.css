@@ -1,0 +1,388 @@
+@media print {
+  @page {
+    size: letter portrait;
+    margin: 0.18in;
+  }
+
+  * {
+    animation: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    transition: none !important;
+  }
+
+  html,
+  body {
+    width: 100%;
+    background: #fff;
+    color: #111;
+    font-size: 9.5px;
+    line-height: 1.18;
+  }
+
+  body {
+    zoom: 1;
+  }
+
+  .app-header,
+  .auth-view,
+  .planner-rail,
+  .meal-actions,
+  .plan-heading-actions button,
+  .ghost-button,
+  .skip-link,
+  .favorites-panel,
+  .status-pill {
+    display: none !important;
+  }
+
+  .manual-grocery-form,
+  .grocery-item-actions button {
+    display: none !important;
+  }
+
+  .dashboard-shell,
+  .workspace,
+  .side-grid,
+  .summary-card,
+  .meal-grid,
+  .stat-grid,
+  .grocery-list,
+  .prep-schedule {
+    display: grid;
+    padding: 0;
+    margin: 0;
+    gap: 0.08in;
+    width: 100%;
+  }
+
+  .dashboard-shell,
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-card {
+    grid-template-columns: 0.72fr 2.28fr;
+    align-items: start;
+    margin-bottom: 0.045in;
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.045in;
+  }
+
+  .meal-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.055in;
+  }
+
+  .side-grid {
+    grid-template-columns: 1fr 1fr;
+    margin-top: 0.055in;
+    min-height: 4.2in;
+    align-items: stretch;
+  }
+
+  .side-grid > .panel {
+    min-height: 4.2in;
+  }
+
+  .panel,
+  .day-card,
+  .meal-card,
+  .grocery-category,
+  .prep-block,
+  .stat {
+    background: #fff !important;
+    border: 1px solid #d8ddd9 !important;
+    border-radius: 8px !important;
+    break-inside: avoid;
+    color: #111;
+  }
+
+  .panel {
+    padding: 0.055in;
+    margin: 0;
+  }
+
+  .summary-card,
+  .day-card {
+    padding: 0.06in;
+  }
+
+  .meal-card,
+  .grocery-category,
+  .prep-block,
+  .stat {
+    padding: 0.045in;
+  }
+
+  h1,
+  h2,
+  h3 {
+    color: #111;
+    line-height: 1.05;
+  }
+
+  h2 {
+    font-size: 11.5px;
+  }
+
+  h3 {
+    font-size: 9.2px;
+  }
+
+  p,
+  li,
+  small,
+  .field span,
+  .meal-card small,
+  .meal-kicker,
+    .day-header p,
+    .prep-block p,
+    .empty-state {
+    color: #333 !important;
+    font-size: 7.4px;
+    line-height: 1.12;
+  }
+
+  .eyebrow,
+    .meal-kicker {
+    color: #111 !important;
+    font-size: 6.5px;
+    letter-spacing: 0.03em;
+  }
+
+  .stat span {
+    color: #555;
+    font-size: 6px;
+  }
+
+  .stat strong {
+    margin-top: 0.008in;
+    font-size: 8px;
+  }
+
+  .day-header {
+    gap: 0.025in;
+    margin-bottom: 0.02in;
+  }
+
+  .meal-top {
+    grid-template-columns: 0.2in minmax(0, 1fr);
+    gap: 0.03in;
+  }
+
+  .meal-icon {
+    width: 0.19in;
+    height: 0.19in;
+    color: #111 !important;
+    background: #e8f1ec !important;
+    border: 1px solid #cbd8d0;
+    border-radius: 999px;
+    font-size: 7px;
+  }
+
+  .meal-card {
+    gap: 0.035in;
+  }
+
+  .meal-card .badge-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .meal-card .badge {
+    justify-content: center;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .section-heading {
+    margin-bottom: 0.035in;
+  }
+
+  .section-heading .ghost-button,
+  .section-heading .compact,
+  .meal-quick-action,
+  .recipe-details summary {
+    display: none !important;
+  }
+
+  .recipe-details:not([open]) > .recipe-details-body {
+    display: grid !important;
+  }
+
+  .recipe-details {
+    border: 0;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .badge-row {
+    gap: 0.025in;
+  }
+
+  .badge {
+    min-height: 0;
+    padding: 0.018in 0.035in;
+    color: #111 !important;
+    background: #f6f8f7 !important;
+    border-color: #d8ddd9 !important;
+    font-size: 6.4px;
+    line-height: 1;
+  }
+
+  .meal-section {
+    gap: 0.018in;
+    padding-top: 0.025in;
+    border-top-color: #e0e4e1;
+  }
+
+  .meal-section ul,
+  .meal-section ol,
+  .grocery-category ul,
+    .prep-schedule ol,
+    .favorites-list ul {
+    gap: 0.01in;
+    padding-left: 0.1in;
+    font-size: 7px;
+    line-height: 1.1;
+  }
+
+  .grocery-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .prep-schedule {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grocery-category label {
+    display: block;
+  }
+
+  .grocery-category label strong,
+  .grocery-category label small {
+    font-size: 7.8px;
+    line-height: 1.12;
+  }
+
+  .grocery-category input {
+    display: none;
+  }
+
+  .grocery-category ul {
+    list-style: none;
+    padding-left: 0;
+  }
+
+  #summary-text {
+    margin-top: 0.03in;
+  }
+
+  #meal-plan,
+  .grocery-list,
+  .prep-schedule {
+    margin-top: 0.035in;
+  }
+}
+
+@media print {
+  @page {
+    margin: 0.5in;
+  }
+
+  html,
+  body {
+    font-size: 11pt;
+    line-height: 1.35;
+  }
+
+  .dashboard-shell,
+  .workspace,
+  .summary-card,
+  .side-grid,
+  .meal-grid,
+  .stat-grid,
+  .grocery-list,
+  .prep-schedule {
+    grid-template-columns: 1fr;
+    gap: 10pt;
+  }
+
+  .panel,
+  .day-card {
+    padding: 10pt;
+    break-inside: auto;
+  }
+
+  .meal-card,
+  .grocery-category,
+  .prep-block,
+  .stat {
+    padding: 8pt;
+    break-inside: avoid;
+  }
+
+  .day-card + .day-card {
+    break-before: page;
+  }
+
+  h2 {
+    font-size: 16pt;
+  }
+
+  h3 {
+    font-size: 12pt;
+  }
+
+  p,
+  li,
+  small,
+  .meal-card small,
+  .meal-kicker,
+  .day-header p,
+  .prep-block p,
+  .empty-state,
+  .grocery-category label strong,
+  .grocery-category label small {
+    font-size: 10pt;
+    line-height: 1.35;
+  }
+
+  .eyebrow,
+  .meal-kicker,
+  .stat span,
+  .badge {
+    font-size: 8.5pt;
+  }
+
+  .stat strong {
+    font-size: 10.5pt;
+  }
+
+  .grocery-category input {
+    display: inline-block;
+    width: 11pt;
+    min-height: 11pt;
+    margin-right: 5pt;
+  }
+
+  .grocery-category label {
+    display: grid;
+    grid-template-columns: 14pt minmax(0, 1fr);
+  }
+
+  .safety-source {
+    font-size: 9pt;
+  }
+}
+
+/* Nutrition reference page and measurement note. */
+.nutrition-note {
+  margin-top: 0.7rem;
+}
+
+.nutrition-note a,

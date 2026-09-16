@@ -29,7 +29,9 @@ public class Main {
             "jpeg", "image/jpeg"
     );
     private static final Set<String> PUBLIC_ROOT_FILES = Set.of(
-            "index.html", "styles.css", "nutrition-data.js", "nutrition.html",
+            "index.html", "styles.css", "styles-foundation.css", "styles-layout.css",
+            "styles-components.css", "styles-responsive.css", "styles-print.css",
+            "styles-nutrition.css", "nutrition-data.js", "nutrition.html",
             "recipe-data.js", "plan-math.js", "app.js", "manifest.webmanifest",
             "service-worker.js"
     );

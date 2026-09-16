@@ -7,15 +7,18 @@ import { createProfileStore } from "./modules/profiles.js";
 import { createPersistence } from "./modules/persistence.js";
 import { createRenderer } from "./modules/render.js";
 import { createDebugInfo } from "./modules/diagnostics.js";
+import { loadUnitSystem, saveUnitSystem } from "./modules/units.js";
 
 const STORAGE_KEYS = {
   settings: "prepfit-settings-v2",
   favorites: "prepfit-favorites",
   theme: "prepfit-theme",
+  units: "prepfit-units",
   accounts: "prepfit-accounts-v1",
   currentAccount: "prepfit-current-account-v1",
 };
 const PLANNER_SCHEMA_VERSION = 2;
+const MEAL_EDIT_HISTORY_LIMIT = 8;
 
 const DEFAULTS = {
   goalMode: "daily",
@@ -27,6 +30,8 @@ const DEFAULTS = {
   supplementCalories: 0,
   supplementCarbs: 0,
   supplementFat: 0,
+  supplementFiber: 0,
+  supplementSodium: 0,
   supplementAllergens: "dairy",
   people: 1,
   days: 5,
@@ -66,6 +71,7 @@ const dom = {
   planStatus: document.querySelector("#plan-status"),
   undoPlanEdit: document.querySelector("#undo-plan-edit"),
   themeToggle: document.querySelector("#theme-toggle"),
+  unitToggle: document.querySelector("#unit-toggle"),
   randomize: document.querySelector("#randomize"),
   printPlan: document.querySelector("#print-plan"),
   downloadPlan: document.querySelector("#download-plan"),
@@ -100,8 +106,9 @@ let purchasedItems = new Map();
 let pantryItems = new Set();
 let manualGroceries = [];
 let editingManualId = null;
-let mealEditSnapshot = null;
+let mealEditHistory = [];
 let storageMessage = "";
+let unitSystem = "metric";
 
 const browserStorage = globalThis.localStorage || {
   getItem: () => null,
@@ -146,6 +153,7 @@ const {
   ingredientGrams,
   nutritionUnit,
   supplementalPowderIngredient,
+  getUnitSystem: () => unitSystem,
 });
 const exporter = createExporter({ document, navigator: globalThis.navigator || {} });
 const {
@@ -205,6 +213,7 @@ initialize();
 
 function initialize() {
   applyTheme(loadTheme());
+  applyUnitSystem(loadUnitSystem(storage, STORAGE_KEYS.units));
   migrateLegacyProfiles();
   bindEvents();
   restoreSession();
@@ -258,6 +267,7 @@ function bindEvents() {
   dom.manualGroceryCancel.addEventListener("click", cancelManualGroceryEdit);
   dom.randomize.addEventListener("click", () => generatePlan({ shuffle: true }));
   dom.themeToggle.addEventListener("click", toggleTheme);
+  dom.unitToggle.addEventListener("click", toggleUnitSystem);
   dom.printPlan.addEventListener("click", () => window.print());
   dom.downloadPlan.addEventListener("click", downloadPlan);
   dom.copyGroceries.addEventListener("click", copyGroceries);
@@ -380,7 +390,7 @@ function handleSavedProfileClick(event) {
 
 function signIn(account) {
   currentAccount = account;
-  mealEditSnapshot = null;
+  mealEditHistory = [];
   safeSetItem(STORAGE_KEYS.currentAccount, account.id);
   document.body.classList.add("is-authenticated");
   dom.accountName.textContent = account.name;
@@ -403,7 +413,7 @@ function logoutAccount() {
   pantryItems = new Set();
   manualGroceries = [];
   editingManualId = null;
-  mealEditSnapshot = null;
+  mealEditHistory = [];
   storageMessage = "";
   safeRemoveItem(STORAGE_KEYS.currentAccount);
   document.body.classList.remove("is-authenticated");
@@ -506,7 +516,7 @@ function generatePlan(options = {}) {
   }
 
   const settings = readSettings();
-  mealEditSnapshot = null;
+  mealEditHistory = [];
   const settingsSaved = saveSettings(settings);
   updateGoalLabel(settings);
 
@@ -558,7 +568,7 @@ function renderCurrentState(note = "") {
   dom.printPlan.disabled = !state.plan.days.length;
   dom.downloadPlan.disabled = !state.plan.days.length;
   dom.copyGroceries.disabled = !state.groceries.length;
-  dom.undoPlanEdit.hidden = !mealEditSnapshot;
+  dom.undoPlanEdit.hidden = mealEditHistory.length === 0;
 }
 
 function readSettings() {
@@ -599,6 +609,8 @@ function readSettings() {
     supplementCalories: clamp(numberFrom(data.get("supplementCalories"), 0), 0, 1200),
     supplementCarbs: clamp(numberFrom(data.get("supplementCarbs"), 0), 0, 200),
     supplementFat: clamp(numberFrom(data.get("supplementFat"), 0), 0, 120),
+    supplementFiber: clamp(numberFrom(data.get("supplementFiber"), 0), 0, 100),
+    supplementSodium: clamp(numberFrom(data.get("supplementSodium"), 0), 0, 5000),
     supplementAllergens: String(data.get("supplementAllergens") || "")
       .trim()
       .slice(0, 100),
@@ -663,11 +675,12 @@ function swapMeal(dayIndex, mealIndex) {
 }
 
 function captureMealEdit() {
-  mealEditSnapshot = {
+  mealEditHistory.push({
     plan: JSON.parse(JSON.stringify(state.plan)),
     purchases: [...purchasedItems],
     pantry: [...pantryItems],
-  };
+  });
+  if (mealEditHistory.length > MEAL_EDIT_HISTORY_LIMIT) mealEditHistory.shift();
 }
 
 function editMeal(dayIndex, mealIndex, action) {
@@ -698,7 +711,7 @@ function editMeal(dayIndex, mealIndex, action) {
     limits.max,
   );
   if (Math.abs(nextRatio - (meal.portionRatio || 1)) < 0.001) {
-    mealEditSnapshot = null;
+    mealEditHistory.pop();
     renderCurrentState(
       `Portions are limited to ${Math.round(limits.min * 100)}%–${Math.round(limits.max * 100)}% for this budget mode.`,
     );
@@ -736,13 +749,16 @@ function recomputeEditedPlan(message) {
 }
 
 function undoMealEdit() {
-  if (!state || !mealEditSnapshot) return;
-  const snapshot = mealEditSnapshot;
-  mealEditSnapshot = null;
+  if (!state || mealEditHistory.length === 0) return;
+  const snapshot = mealEditHistory.pop();
   state.plan = snapshot.plan;
   purchasedItems = new Map(snapshot.purchases);
   pantryItems = new Set(snapshot.pantry);
-  recomputeEditedPlan("Last meal edit undone.");
+  recomputeEditedPlan(
+    mealEditHistory.length
+      ? `Meal edit undone. ${mealEditHistory.length} earlier ${mealEditHistory.length === 1 ? "edit" : "edits"} can still be undone.`
+      : "Last meal edit undone.",
+  );
 }
 
 function handleGroceryChange(event) {
@@ -907,7 +923,7 @@ function resetSettings() {
   pantryItems = new Set();
   manualGroceries = [];
   editingManualId = null;
-  mealEditSnapshot = null;
+  mealEditHistory = [];
   applySettings(DEFAULTS);
   generatePlan({ shuffle: true });
 }
@@ -1026,6 +1042,25 @@ function loadTheme() {
   if (saved === "morning" || saved === "evening") return saved;
   const hour = new Date().getHours();
   return hour >= 6 && hour < 18 ? "morning" : "evening";
+}
+
+function toggleUnitSystem() {
+  applyUnitSystem(unitSystem === "metric" ? "imperial" : "metric");
+  saveUnitSystem(storage, STORAGE_KEYS.units, unitSystem);
+  if (!state) return;
+  lastGroceryText = groceryText(state.groceries, purchasedItems, pantryItems);
+  renderMeals(state.plan, state.settings);
+  renderGroceries(state.groceries);
+}
+
+function applyUnitSystem(value) {
+  unitSystem = value === "imperial" ? "imperial" : "metric";
+  dom.unitToggle.textContent = unitSystem === "metric" ? "Metric" : "Imperial";
+  dom.unitToggle.setAttribute("aria-pressed", String(unitSystem === "imperial"));
+  dom.unitToggle.setAttribute(
+    "aria-label",
+    `Switch to ${unitSystem === "metric" ? "imperial" : "metric"} units`,
+  );
 }
 
 function readSettingsNoSave() {
