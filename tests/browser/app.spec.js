@@ -86,6 +86,7 @@ test("complete planning journey persists and works offline", async ({ page, cont
   await expect(page.locator("#grocery-list")).toContainText("Rice Protein Blend");
 
   await page.locator('[name="manualName"]').fill("Coffee beans");
+  await page.getByText("Add quantity (optional)").click();
   await page.locator('[name="manualAmount"]').fill("2");
   await page.locator('[name="manualUnit"]').fill("bag");
   await page.getByRole("button", { name: "Add item" }).click();

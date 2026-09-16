@@ -90,10 +90,6 @@
     display: none;
   }
 
-  .stat-grid {
-    grid-template-columns: 1fr;
-  }
-
   .card-heading,
   .section-heading {
     align-items: stretch;

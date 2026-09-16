@@ -245,10 +245,17 @@
               <button id="copy-groceries" class="ghost-button compact" type="button">Copy</button>
             </div>
             <form id="manual-grocery-form" class="manual-grocery-form">
-              <label class="field"><span>Custom item</span><input name="manualName" maxlength="50" required placeholder="Coffee" /></label>
-              <label class="field"><span>Amount</span><input name="manualAmount" type="number" min="0.01" max="9999" step="0.01" value="1" required /></label>
-              <label class="field"><span>Unit</span><input name="manualUnit" maxlength="16" value="count" required /></label>
-              <button id="manual-grocery-submit" class="ghost-button compact" type="submit">Add item</button>
+              <div class="manual-grocery-primary">
+                <label class="field"><span>Custom item</span><input name="manualName" maxlength="50" required placeholder="Coffee" /></label>
+                <button id="manual-grocery-submit" class="ghost-button compact" type="submit">Add item</button>
+              </div>
+              <details id="manual-grocery-quantity" class="manual-grocery-quantity">
+                <summary>Add quantity (optional)</summary>
+                <div class="field-grid">
+                  <label class="field"><span>Amount</span><input name="manualAmount" type="number" min="0.01" max="9999" step="0.01" value="1" required /></label>
+                  <label class="field"><span>Unit</span><input name="manualUnit" maxlength="16" value="count" required /></label>
+                </div>
+              </details>
               <button id="manual-grocery-cancel" class="link-button" type="button" hidden>Cancel edit</button>
             </form>
             <div id="grocery-list" class="grocery-list"></div>

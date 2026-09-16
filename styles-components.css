@@ -327,14 +327,34 @@ body[data-theme="evening"] .meal-icon {
 
 .manual-grocery-form {
   display: grid;
-  grid-template-columns: minmax(8rem, 2fr) minmax(5rem, 0.8fr) minmax(5rem, 0.8fr) auto;
   gap: 0.55rem;
-  align-items: end;
   margin-top: 1rem;
 }
 
 .manual-grocery-form .field {
   gap: 0.25rem;
+}
+
+.manual-grocery-primary {
+  display: flex;
+  gap: 0.55rem;
+  align-items: end;
+}
+
+.manual-grocery-primary .field {
+  flex: 1;
+  min-width: 0;
+}
+
+.manual-grocery-quantity summary {
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.manual-grocery-quantity .field-grid {
+  margin-top: 0.55rem;
 }
 
 .grocery-item-actions {
@@ -354,16 +374,6 @@ body[data-theme="evening"] .meal-icon {
 
 .grocery-category li.is-pantry > label > span {
   opacity: 0.62;
-}
-
-@media (max-width: 620px) {
-  .manual-grocery-form {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .manual-grocery-form .field:first-child {
-    grid-column: 1 / -1;
-  }
 }
 
 .grocery-category {

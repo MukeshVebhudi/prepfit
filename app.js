@@ -80,6 +80,7 @@ const dom = {
   manualGroceryForm: document.querySelector("#manual-grocery-form"),
   manualGrocerySubmit: document.querySelector("#manual-grocery-submit"),
   manualGroceryCancel: document.querySelector("#manual-grocery-cancel"),
+  manualGroceryQuantity: document.querySelector("#manual-grocery-quantity"),
   resetPlan: document.querySelector("#reset-plan"),
   clearFavorites: document.querySelector("#clear-favorites"),
   authView: document.querySelector("#auth-view"),
@@ -851,6 +852,7 @@ function handleGroceryAction(event) {
     dom.manualGroceryForm.elements.manualUnit.value = item.unit;
     dom.manualGrocerySubmit.textContent = "Save item";
     dom.manualGroceryCancel.hidden = false;
+    dom.manualGroceryQuantity.open = true;
     dom.manualGroceryForm.elements.manualName.focus();
     return;
   }
@@ -869,6 +871,7 @@ function cancelManualGroceryEdit() {
   dom.manualGroceryForm.elements.manualUnit.value = "count";
   dom.manualGrocerySubmit.textContent = "Add item";
   dom.manualGroceryCancel.hidden = true;
+  dom.manualGroceryQuantity.open = false;
 }
 
 function handleMealAction(event) {
