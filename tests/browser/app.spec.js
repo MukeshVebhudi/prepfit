@@ -100,7 +100,7 @@ test("complete planning journey persists and works offline", async ({ page, cont
   await manualRow.getByLabel("In pantry").check();
 
   await page.getByText("Variety", { exact: true }).click();
-  await page.getByText("Vegetarian", { exact: true }).click();
+  await page.getByText("🥦 Vegetarian", { exact: true }).click();
   await page.locator("#avoid-ingredients").fill("peanut butter");
   await page.locator("#days").fill("3");
   await page.locator("#days").blur();
