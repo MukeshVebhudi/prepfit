@@ -220,6 +220,19 @@
     overflow: visible;
   }
 
+  .prep-details:not([open]) > .prep-details-body {
+    display: grid !important;
+  }
+
+  .prep-details summary::after {
+    display: none !important;
+  }
+
+  .prep-details summary {
+    cursor: default;
+    font-size: 9.2px;
+  }
+
   .badge-row {
     gap: 0.025in;
   }

@@ -285,17 +285,23 @@ function bindEvents() {
 }
 
 function openRecipeDetailsForPrint() {
-  document.querySelectorAll(".recipe-details:not([open])").forEach((details) => {
-    details.dataset.openedForPrint = "true";
-    details.open = true;
-  });
+  document
+    .querySelectorAll(".recipe-details:not([open]), .prep-details:not([open])")
+    .forEach((details) => {
+      details.dataset.openedForPrint = "true";
+      details.open = true;
+    });
 }
 
 function restoreRecipeDetailsAfterPrint() {
-  document.querySelectorAll('.recipe-details[data-opened-for-print="true"]').forEach((details) => {
-    details.open = false;
-    delete details.dataset.openedForPrint;
-  });
+  document
+    .querySelectorAll(
+      '.recipe-details[data-opened-for-print="true"], .prep-details[data-opened-for-print="true"]',
+    )
+    .forEach((details) => {
+      details.open = false;
+      delete details.dataset.openedForPrint;
+    });
 }
 
 function restoreSession() {

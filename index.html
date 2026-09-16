@@ -185,20 +185,23 @@
 
           <fieldset>
             <legend>Nutrition targets</legend>
-            <div class="field-grid">
-              <label class="field">
-                <span>Calories/day</span>
-                <input id="calorie-goal" name="calorieGoal" type="number" min="0" max="4500" step="50" value="0" />
-              </label>
-              <label class="field">
-                <span>Carbs/day</span>
-                <input id="carb-goal" name="carbGoal" type="number" min="0" max="600" step="5" value="0" />
-              </label>
-              <label class="field">
-                <span>Fat/day</span>
-                <input id="fat-goal" name="fatGoal" type="number" min="0" max="250" step="5" value="0" />
-              </label>
-            </div>
+            <details class="nutrition-targets-details">
+              <summary>Add calorie, carb, and fat targets (optional)</summary>
+              <div class="field-grid">
+                <label class="field">
+                  <span>Calories/day</span>
+                  <input id="calorie-goal" name="calorieGoal" type="number" min="0" max="4500" step="50" value="0" />
+                </label>
+                <label class="field">
+                  <span>Carbs/day</span>
+                  <input id="carb-goal" name="carbGoal" type="number" min="0" max="600" step="5" value="0" />
+                </label>
+                <label class="field">
+                  <span>Fat/day</span>
+                  <input id="fat-goal" name="fatGoal" type="number" min="0" max="250" step="5" value="0" />
+                </label>
+              </div>
+            </details>
           </fieldset>
 
           <div class="form-actions">

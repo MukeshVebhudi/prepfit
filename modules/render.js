@@ -254,7 +254,7 @@ export function createRenderer({
       blocks
         .map(
           (block) =>
-            `<section class="prep-block"><h3>${escapeHtml(block.title)}</h3><p>${escapeHtml(block.text)}</p></section>`,
+            `<details class="prep-details prep-block"><summary><span>${escapeHtml(block.title)}</span></summary><div class="prep-details-body"><p>${escapeHtml(block.text)}</p></div></details>`,
         )
         .join("") +
       `<p class="safety-source">Storage and reheating guidance: <a href="https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/leftovers-and-food-safety" target="_blank" rel="noopener">USDA Leftovers and Food Safety</a>.</p>`;
