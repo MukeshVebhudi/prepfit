@@ -1,5 +1,4 @@
 const assert = require("node:assert/strict");
-const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 const { loadAppSources } = require("./load-app");
@@ -48,7 +47,7 @@ assert.equal(localStorage.getItem(profileStorageKey('gmail:pat@gmail.com', 'favo
 
 const reservedProfile = Object.values(migrated).find(account => account.name === 'Reserved Name');
 assert.ok(reservedProfile.id.startsWith('legacy:'));
-assert.equal(isReservedProfileId(reservedProfile.id), false);
+assert.equal(profileStore.isReservedId(reservedProfile.id), false);
 assert.equal(localStorage.getItem(profileStorageKey(reservedProfile.id, 'settings')), '{"days":4}');
 assert.equal(localStorage.getItem(STORAGE_KEYS.currentAccount), reservedProfile.id);
 
@@ -59,7 +58,7 @@ assert.equal(profileNameExists(loaded, 'Alice', 'alice'), false);
 const firstId = uniqueProfileId('New Person', loaded);
 loaded[firstId] = { id: firstId, name: 'New Person' };
 assert.notEqual(uniqueProfileId('New Person', loaded), firstId);
-assert.equal(isReservedProfileId(uniqueProfileId('__proto__', loaded)), false);
+assert.equal(profileStore.isReservedId(uniqueProfileId('__proto__', loaded)), false);
 
 localStorage.setItem(profileStorageKey('guest', 'settings'), '{"days":6}');
 localStorage.setItem(profileStorageKey('guest', 'planner'), '{"schemaVersion":1,"exact":true}');

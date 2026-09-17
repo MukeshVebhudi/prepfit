@@ -113,4 +113,10 @@ module.exports = [
       },
     },
   },
+  {
+    files: ["tests/**/*.js"],
+    rules: {
+      "no-unused-vars": "error",
+    },
+  },
 ];

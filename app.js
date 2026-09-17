@@ -131,9 +131,6 @@ const saveAccounts = profileStore.save;
 const displayUsername = profileStore.displayName;
 const uniqueProfileId = profileStore.uniqueId;
 const profileNameExists = profileStore.nameExists;
-// Used by the concatenated VM profile-migration test as a public test seam.
-// eslint-disable-next-line no-unused-vars
-const isReservedProfileId = profileStore.isReservedId;
 const profileStorageKey = profileStore.dataKey;
 const copyProfileData = profileStore.copyData;
 const removeProfileData = profileStore.removeData;

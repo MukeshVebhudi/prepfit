@@ -1,7 +1,7 @@
 @media print {
   @page {
     size: letter portrait;
-    margin: 0.18in;
+    margin: 0.5in;
   }
 
   * {
@@ -16,8 +16,8 @@
     width: 100%;
     background: #fff;
     color: #111;
-    font-size: 9.5px;
-    line-height: 1.18;
+    font-size: 11pt;
+    line-height: 1.35;
   }
 
   body {
@@ -52,33 +52,17 @@
     display: grid;
     padding: 0;
     margin: 0;
-    gap: 0.08in;
+    grid-template-columns: 1fr;
+    gap: 10pt;
     width: 100%;
   }
 
-  .dashboard-shell,
-  .workspace {
-    grid-template-columns: 1fr;
-  }
-
   .summary-card {
-    grid-template-columns: 0.72fr 2.28fr;
     align-items: start;
     margin-bottom: 0.045in;
   }
 
-  .stat-grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 0.045in;
-  }
-
-  .meal-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.055in;
-  }
-
   .side-grid {
-    grid-template-columns: 1fr 1fr;
     margin-top: 0.055in;
     min-height: 4.2in;
     align-items: stretch;
@@ -102,20 +86,20 @@
   }
 
   .panel {
-    padding: 0.055in;
     margin: 0;
   }
 
-  .summary-card,
+  .panel,
   .day-card {
-    padding: 0.06in;
+    padding: 10pt;
+    break-inside: auto;
   }
 
   .meal-card,
   .grocery-category,
   .prep-block,
   .stat {
-    padding: 0.045in;
+    padding: 8pt;
   }
 
   h1,
@@ -126,11 +110,11 @@
   }
 
   h2 {
-    font-size: 11.5px;
+    font-size: 16pt;
   }
 
   h3 {
-    font-size: 9.2px;
+    font-size: 12pt;
   }
 
   p,
@@ -139,29 +123,27 @@
   .field span,
   .meal-card small,
   .meal-kicker,
-    .day-header p,
-    .prep-block p,
-    .empty-state {
+  .day-header p,
+  .prep-block p,
+  .empty-state {
     color: #333 !important;
     font-size: 7.4px;
     line-height: 1.12;
   }
 
   .eyebrow,
-    .meal-kicker {
+  .meal-kicker {
     color: #111 !important;
-    font-size: 6.5px;
     letter-spacing: 0.03em;
   }
 
   .stat span {
     color: #555;
-    font-size: 6px;
   }
 
   .stat strong {
     margin-top: 0.008in;
-    font-size: 8px;
+    font-size: 10.5pt;
   }
 
   .day-header {
@@ -243,7 +225,6 @@
     color: #111 !important;
     background: #f6f8f7 !important;
     border-color: #d8ddd9 !important;
-    font-size: 6.4px;
     line-height: 1;
   }
 
@@ -256,34 +237,12 @@
   .meal-section ul,
   .meal-section ol,
   .grocery-category ul,
-    .prep-schedule ol,
-    .favorites-list ul {
+  .prep-schedule ol,
+  .favorites-list ul {
     gap: 0.01in;
     padding-left: 0.1in;
     font-size: 7px;
     line-height: 1.1;
-  }
-
-  .grocery-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .prep-schedule {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .grocery-category label {
-    display: block;
-  }
-
-  .grocery-category label strong,
-  .grocery-category label small {
-    font-size: 7.8px;
-    line-height: 1.12;
-  }
-
-  .grocery-category input {
-    display: none;
   }
 
   .grocery-category ul {
@@ -300,55 +259,8 @@
   .prep-schedule {
     margin-top: 0.035in;
   }
-}
-
-@media print {
-  @page {
-    margin: 0.5in;
-  }
-
-  html,
-  body {
-    font-size: 11pt;
-    line-height: 1.35;
-  }
-
-  .dashboard-shell,
-  .workspace,
-  .summary-card,
-  .side-grid,
-  .meal-grid,
-  .stat-grid,
-  .grocery-list,
-  .prep-schedule {
-    grid-template-columns: 1fr;
-    gap: 10pt;
-  }
-
-  .panel,
-  .day-card {
-    padding: 10pt;
-    break-inside: auto;
-  }
-
-  .meal-card,
-  .grocery-category,
-  .prep-block,
-  .stat {
-    padding: 8pt;
-    break-inside: avoid;
-  }
-
   .day-card + .day-card {
     break-before: page;
-  }
-
-  h2 {
-    font-size: 16pt;
-  }
-
-  h3 {
-    font-size: 12pt;
   }
 
   p,
@@ -372,10 +284,6 @@
     font-size: 8.5pt;
   }
 
-  .stat strong {
-    font-size: 10.5pt;
-  }
-
   .grocery-category input {
     display: inline-block;
     width: 11pt;
@@ -392,10 +300,3 @@
     font-size: 9pt;
   }
 }
-
-/* Nutrition reference page and measurement note. */
-.nutrition-note {
-  margin-top: 0.7rem;
-}
-
-.nutrition-note a,

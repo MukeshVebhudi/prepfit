@@ -32,15 +32,6 @@ export function createGroceryTools({
         box: "boxes",
         jar: "jars",
         pack: "packs",
-        count: "count",
-        tbsp: "tbsp",
-        tsp: "tsp",
-        oz: "oz",
-        g: "g",
-        kg: "kg",
-        lb: "lb",
-        ml: "ml",
-        l: "l",
       }[unit] || unit
     );
   }
@@ -56,7 +47,7 @@ export function createGroceryTools({
     if (ingredient.manual) {
       if (["g", "kg", "oz", "lb"].includes(unit))
         return `${displayMass(massInGrams(amount, unit), getUnitSystem(), formatAmount)} ${ingredient.name}`;
-      return `${formatAmount(amount)} ${displayUnit(normalizeUnit(ingredient.unit), amount)} ${ingredient.name}`;
+      return `${formatAmount(amount)} ${displayUnit(unit, amount)} ${ingredient.name}`;
     }
     if (ingredient.customSupplement)
       return `${displayMass(amount, getUnitSystem(), formatAmount)} ${ingredient.name} (use product label)`;

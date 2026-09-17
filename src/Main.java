@@ -84,14 +84,7 @@ public class Main {
     }
 
     private static String contentType(Path file) {
-        String name = file.getFileName().toString();
-        int dotIndex = name.lastIndexOf('.');
-        if (dotIndex == -1 || dotIndex == name.length() - 1) {
-            return "application/octet-stream";
-        }
-
-        String extension = name.substring(dotIndex + 1).toLowerCase();
-        return CONTENT_TYPES.getOrDefault(extension, "application/octet-stream");
+        return CONTENT_TYPES.getOrDefault(extension(file), "application/octet-stream");
     }
 
     private static boolean isPublicFile(Path file) {
